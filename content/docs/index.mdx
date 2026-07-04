@@ -1,13 +1,114 @@
 ---
-title: Hello World
-description: Your first document
+title: Roadmap for JS
+description: A structured, engine-first curriculum for mastering Advanced JavaScript in the exact sequence required for production-level, AI Full-Stack Engineer readiness.
+icon: Code2
 ---
 
-Welcome to the docs! You can start writing documents in `/content/docs`.
+import { Step, Steps } from 'fumadocs-ui/components/steps';
+import { Callout } from 'fumadocs-ui/components/callout';
 
-## What is Next?
+## Why This Order Matters
 
-<Cards>
-  <Card title="Learn more about Next.js" href="https://nextjs.org/docs" />
-  <Card title="Learn more about Fumadocs" href="https://fumadocs.dev" />
-</Cards>
+This roadmap is not a list of random syntax tricks. Each module builds directly on the mental model from the one before it — starting with how the **JavaScript Engine actually executes code in memory**, and ending with the metaprogramming patterns used in production-grade systems.
+
+<Callout title="Sequencing Rule" type="info">
+  Do not skip ahead. Module 5 (Async Architecture) only makes sense once the Call Stack, Execution Contexts, and Closures from Modules 1–3 are solid.
+</Callout>
+
+## Curriculum
+
+<Steps>
+
+<Step>
+### Module 1 — The Engine Runtime & Compilation
+
+Understand exactly how the browser/Node.js executes your code before you write a single line.
+
+- **JS Engine Architecture** — Parser, AST, Interpreter (Ignition), JIT Compiler (TurboFan)
+- **Execution Contexts** — Global vs. Function Execution Context
+- **Two-Phase Execution Lifecycle** — Creation Phase (memory allocation) vs. Code Execution Phase
+- **Hoisting Mechanics** — function declarations vs. `var` vs. `let`/`const`
+- **Temporal Dead Zone (TDZ)** — why block-scoped variables fail before initialization
+- **The Call Stack** — stack frames, LIFO tracking, stack overflows
+</Step>
+
+<Step>
+### Module 2 — Memory Management & Types
+
+- **Primitive vs. Reference Values** — stack storage vs. heap pointers
+- **Garbage Collection** — Mark-and-Sweep, detached DOM nodes, forgotten intervals
+- **Deep Type Coercion** — implicit vs. explicit casting, `==` vs `===`, `ToPrimitive`
+- **Accurate Type Checking** — limits of `typeof`/`instanceof`, `Object.prototype.toString.call()`
+- **Immutability Patterns** — deep vs. shallow cloning, `structuredClone()`, `Object.freeze()` vs. `Object.seal()`
+</Step>
+
+<Step>
+### Module 3 — Scope, Closures & Functional Architecture
+
+- **Lexical Scoping Chains** — static scoping vs. runtime evaluation
+- **Closures Deep Dive** — lexical environments, persisting state, data privacy
+- **The `this` Keyword** — global, implicit, explicit, and `new` binding
+- **Explicit Binding** — `.call()`, `.apply()`, `.bind()`
+- **Advanced Functional Patterns** — Higher-Order Functions, pure functions, currying, partial application, composition
+</Step>
+
+<Step>
+### Module 4 — Data Structures & Advanced ES6+ Syntax
+
+- **Declarative Arrays** — custom implementations of `.map()`, `.filter()`, `.reduce()`, `.some()`, `.every()`, `.flatMap()`
+- **Destructuring & Rest/Spread** — nested patterns, cloning, parameter bundling, defaults
+- **Keyed Collections** — `Map` vs. plain objects, `Set`, `WeakMap`/`WeakSet`
+- **Strings & Regex** — template literals, tagged templates, lookaheads, capture groups
+- **Modern Operators** — optional chaining (`?.`), nullish coalescing (`??`), short-circuiting
+</Step>
+
+<Step>
+### Module 5 — Asynchronous Architecture
+
+Critical for AI event loops and streaming responses.
+
+- **The Event Loop** — Call Stack, Web APIs/Node C++ APIs, MacroTask Queue, MicroTask Queue, Render Queue
+- **Microtask Prioritization** — why Promises interrupt `setTimeout`/`setInterval`
+- **Evolution of Async Flow** — Callbacks → Callback Hell → Promises → Async/Await
+- **Promise Architecture** — building a custom Promise from scratch (Pending, Fulfilled, Rejected)
+- **Async Orchestration** — `Promise.all()`, `Promise.allSettled()`, `Promise.any()`, `Promise.race()`
+- **Streams, Iterators & Generators** — custom iterators, `function*`/`yield`, `for await...of`
+</Step>
+
+<Step>
+### Module 6 — Object-Oriented JavaScript & Prototypes
+
+- **The Prototype Chain** — `__proto__` vs `prototype`, shadowing, lookup path
+- **Prototypal Inheritance** — `Object.create()`, constructor functions
+- **ES6 Class Syntax** — classes, instantiation, compilation patterns
+- **OOP Pillars** — `extends`/`super`, private fields (`#private`), static members, polymorphism
+</Step>
+
+<Step>
+### Module 7 — DOM Engineering & Browser APIs
+
+- **DOM Tree Composition** — node hierarchies, live HTMLCollections vs. static NodeLists
+- **Optimized Manipulation** — `querySelector`, reflow/repaint triggers
+- **Event System Workflow** — capturing, target, bubbling phases
+- **High-Performance Patterns** — event delegation, `.stopPropagation()`, `.preventDefault()`
+- **Browser Storage** — `localStorage`, `sessionStorage`, cookies, `IndexedDB`
+- **Modern Fetching** — Fetch API, `AbortController`, CORS, stream chunk parsing
+</Step>
+
+<Step>
+### Module 8 — Metaprogramming & Advanced Patterns
+
+- **Proxy & Reflect APIs** — intercepting behavior, trapping gets/sets, reactivity wrappers
+- **Performance Algorithms** — debouncing and throttling middleware
+- **Memoization Strategies** — global caching for expensive operations
+- **Design Patterns** — Module, Singleton, Factory, Observer
+- **Error Architecture** — custom `Error` classes, `try...catch...finally`, unit testing with Jest
+</Step>
+
+</Steps>
+
+
+
+<Callout title="Reference" type="info">
+  [JavaScript Full Course 2026 — Master JavaScript in 22 Hours](https://www.youtube.com/watch?v=6_NrgoEkjnE) is a solid supplementary deep-dive on execution contexts, memory allocation, and the event loop.
+</Callout>
