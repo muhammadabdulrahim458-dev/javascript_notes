@@ -1,0 +1,1050 @@
+---
+title: This
+description: The most important concept
+---
+
+This is one of the most misunderstood topics in JavaScript. Most people try to memorize rules like "this refers to the object," but that isn't always true.
+
+The best way to understand `this` is to remember **one golden rule**.
+
+---
+
+# The `this` Keyword
+
+## What is `this`?
+
+`this` is a special keyword in JavaScript that refers to **some object**.
+
+The important question is:
+
+> **Which object?**
+
+The answer is:
+
+> **It depends entirely on how the function is called.**
+
+Notice I said **called**, not **written**.
+
+This is the biggest difference between **closures** and **this**.
+
+---
+
+# Closures vs `this`
+
+Closures are decided when the function is **created** (write-time).
+
+Example:
+
+```js
+function outer() {
+
+    let name = "Ali";
+
+    return function(){
+
+        console.log(name);
+
+    }
+
+}
+```
+
+The inner function will **always** remember
+
+```text
+name = "Ali"
+```
+
+It doesn't matter where we call it.
+
+Because closures depend on **where the function was written.**
+
+---
+
+Now look at `this`.
+
+```js
+function greet(){
+
+    console.log(this);
+
+}
+```
+
+This function doesn't know what `this` is yet.
+
+JavaScript waits until someone calls the function.
+
+Only then does it decide.
+
+So,
+
+> **Closures are decided when functions are created.**
+
+> **`this` is decided when functions are called.**
+
+---
+
+# Think of `this` like a Delivery Driver
+
+Imagine you're a delivery driver.
+
+Every morning your manager tells you
+
+> "Today you'll deliver for House A."
+
+Tomorrow he says
+
+> "Today you'll deliver for House B."
+
+Next week
+
+> "Today you'll deliver for House C."
+
+You're the same delivery driver.
+
+Only the destination changes.
+
+`this` works exactly the same way.
+
+The function stays the same.
+
+Only the object (`this`) changes depending on **who called it.**
+
+---
+
+# JavaScript asks one question
+
+Whenever a function executes, JavaScript asks:
+
+> **"How was this function called?"**
+
+Not
+
+❌ Where was it written?
+
+Not
+
+❌ Which file is it in?
+
+Not
+
+❌ Which object contains it?
+
+Only
+
+✅ **How was it called?**
+
+Depending on the answer, JavaScript chooses one of **four binding rules**.
+
+---
+
+# The Four Binding Rules
+
+```text
+Function Call
+
+        │
+
+        ▼
+
+How was it called?
+
+        │
+
+ ┌──────┼─────────┬─────────┐
+
+ │      │         │         │
+
+new   obj.fn()  call/apply  normal()
+
+ │      │         │         │
+
+ ▼      ▼         ▼         ▼
+
+new     obj      chosen     global/
+
+object            object    undefined
+```
+
+JavaScript checks these rules in order.
+
+---
+
+# Rule 1 — Default (Global) Binding
+
+## When does it happen?
+
+When a function is called normally.
+
+```js
+show();
+```
+
+No object.
+
+No `new`.
+
+No `call()`.
+
+No `bind()`.
+
+Just a normal function.
+
+---
+
+Example
+
+```js
+function show(){
+
+    console.log(this);
+
+}
+
+show();
+```
+
+---
+
+## Non-Strict Mode
+
+Output
+
+```text
+Window (Browser)
+
+global (Node)
+
+globalThis
+```
+
+because JavaScript uses the global object.
+
+---
+
+## Strict Mode
+
+```js
+"use strict";
+
+function show(){
+
+    console.log(this);
+
+}
+
+show();
+```
+
+Output
+
+```text
+undefined
+```
+
+Why?
+
+Because strict mode prevents accidental use of the global object.
+
+---
+
+## Real Life Analogy
+
+Imagine a teacher asks
+
+> "Who submitted this assignment?"
+
+Nobody raises their hand.
+
+The teacher says,
+
+> "I don't know who owns it."
+
+That's like
+
+```text
+this = undefined
+```
+
+No owner exists.
+
+---
+
+# Rule 2 — Implicit Binding
+
+This is the most common rule.
+
+Whenever an object calls a function,
+
+that object becomes `this`.
+
+---
+
+Example
+
+```js
+const user = {
+
+    name:"Ali",
+
+    greet(){
+
+        console.log(this.name);
+
+    }
+
+}
+
+user.greet();
+```
+
+Output
+
+```text
+Ali
+```
+
+---
+
+## Dry Run
+
+JavaScript sees
+
+```js
+user.greet();
+```
+
+It notices
+
+```text
+user
+   .
+ greet()
+```
+
+Who is before the dot?
+
+```text
+user
+```
+
+Therefore
+
+```text
+this = user
+```
+
+Then
+
+```js
+this.name
+```
+
+becomes
+
+```js
+user.name
+```
+
+Result
+
+```text
+Ali
+```
+
+---
+
+## Easy Rule
+
+Whenever you see
+
+```js
+object.function()
+```
+
+Ask
+
+> Who is before the dot?
+
+That object becomes `this`.
+
+---
+
+Example
+
+```js
+car.start();
+```
+
+```text
+this = car
+```
+
+---
+
+```js
+student.study();
+```
+
+```text
+this = student
+```
+
+---
+
+```js
+phone.call();
+```
+
+```text
+this = phone
+```
+
+---
+
+# Rule 3 — Explicit Binding
+
+Sometimes we don't want JavaScript to decide.
+
+We want to choose `this` ourselves.
+
+That's why we use
+
+* call()
+* apply()
+* bind()
+
+---
+
+Example
+
+```js
+function greet(){
+
+    console.log(this.name);
+
+}
+```
+
+Normally
+
+```js
+greet();
+```
+
+No object exists.
+
+---
+
+Instead
+
+```js
+greet.call({
+
+    name:"Sara"
+
+});
+```
+
+Output
+
+```text
+Sara
+```
+
+---
+
+What happened?
+
+We told JavaScript
+
+```text
+Don't decide.
+
+Use THIS object.
+```
+
+So
+
+```js
+this
+```
+
+became
+
+```js
+{
+
+name:"Sara"
+
+}
+```
+
+---
+
+Another example
+
+```js
+const person1 = {
+
+    name:"Ali"
+
+};
+
+const person2 = {
+
+    name:"Ahmed"
+
+};
+
+function greet(){
+
+    console.log(this.name);
+
+}
+
+greet.call(person1);
+
+greet.call(person2);
+```
+
+Output
+
+```text
+Ali
+
+Ahmed
+```
+
+Same function.
+
+Different `this`.
+
+---
+
+# Rule 4 — New Binding
+
+When a function is called using
+
+```js
+new
+```
+
+JavaScript automatically creates a brand-new object.
+
+Then
+
+```text
+this
+```
+
+points to that object.
+
+---
+
+Example
+
+```js
+function Person(name){
+
+    this.name = name;
+
+}
+
+const p = new Person("Ahmed");
+```
+
+---
+
+What happens internally?
+
+JavaScript secretly does something similar to this:
+
+```js
+const obj = {};
+
+obj.__proto__ = Person.prototype;
+
+Person.call(obj,"Ahmed");
+
+return obj;
+```
+
+Notice
+
+```js
+Person.call(obj)
+```
+
+JavaScript internally sets
+
+```text
+this = obj
+```
+
+Then
+
+```js
+this.name = name;
+```
+
+becomes
+
+```js
+obj.name = "Ahmed";
+```
+
+Finally
+
+```js
+return obj;
+```
+
+So
+
+```js
+p
+```
+
+contains
+
+```js
+{
+
+name:"Ahmed"
+
+}
+```
+
+---
+
+# Priority of Binding Rules
+
+Suppose two rules could apply.
+
+Which one wins?
+
+JavaScript follows this order.
+
+```text
+Highest Priority
+
+new
+
+↓
+
+call/apply/bind
+
+↓
+
+object.method()
+
+↓
+
+normal function
+
+Lowest Priority
+```
+
+---
+
+# The Biggest Beginner Mistake
+
+People think
+
+```text
+The object where the function is written
+always becomes this.
+```
+
+Wrong.
+
+Example
+
+```js
+const user = {
+
+    name:"Ali",
+
+    greet(){
+
+        console.log(this.name);
+
+    }
+
+};
+```
+
+Now
+
+```js
+const hello = user.greet;
+
+hello();
+```
+
+Output
+
+```text
+undefined
+```
+
+People expect
+
+```text
+Ali
+```
+
+But why didn't it work?
+
+---
+
+## Dry Run
+
+Originally
+
+```js
+user.greet();
+```
+
+was called like
+
+```text
+user
+ .
+
+greet()
+```
+
+Therefore
+
+```text
+this = user
+```
+
+---
+
+But after
+
+```js
+const hello = user.greet;
+```
+
+we only copied the function.
+
+Now
+
+```js
+hello();
+```
+
+is just
+
+```text
+normal function call
+```
+
+No object.
+
+So JavaScript uses
+
+Default Binding.
+
+Therefore
+
+```text
+this = undefined
+```
+
+---
+
+# Callback Trap
+
+This happens frequently.
+
+Example
+
+```js
+const user={
+
+name:"Ali",
+
+greet(){
+
+console.log(this.name);
+
+}
+
+};
+
+setTimeout(
+
+user.greet,
+
+1000
+
+);
+```
+
+Most beginners expect
+
+```text
+Ali
+```
+
+Actually
+
+```text
+undefined
+```
+
+---
+
+Why?
+
+Because
+
+JavaScript doesn't call
+
+```js
+user.greet();
+```
+
+Instead
+
+`setTimeout` later executes it like
+
+```js
+greet();
+```
+
+No object exists anymore.
+
+Therefore
+
+```text
+this = undefined
+```
+
+---
+
+Solution
+
+```js
+setTimeout(
+
+user.greet.bind(user),
+
+1000
+
+);
+```
+
+Now `bind()` permanently fixes
+
+```text
+this = user
+```
+
+---
+
+# Arrow Functions and `this`
+
+Arrow functions are completely different.
+
+Normal functions create their own `this`.
+
+Arrow functions **never create their own `this`.**
+
+Instead,
+
+they borrow `this` from the surrounding scope.
+
+This is called **lexical `this`**.
+
+---
+
+Example
+
+```js
+const user={
+
+name:"Bilal",
+
+greetArrow:()=>{
+
+console.log(this.name);
+
+}
+
+};
+
+user.greetArrow();
+```
+
+Output
+
+```text
+undefined
+```
+
+Many people expect
+
+```text
+Bilal
+```
+
+Wrong.
+
+---
+
+Why?
+
+Because arrow functions ignore
+
+```js
+user
+```
+
+They look outside.
+
+```text
+Where was I created?
+```
+
+The arrow function was created in the outer scope, not inside a method invocation context, so it inherits the outer `this` (which is not `user`).
+
+Therefore
+
+```js
+this.name
+```
+
+is not
+
+```js
+user.name
+```
+
+---
+
+# Why Arrow Functions are Useful
+
+Consider
+
+```js
+const user={
+
+name:"Bilal",
+
+greet(){
+
+setTimeout(function(){
+
+console.log(this.name);
+
+},1000);
+
+}
+
+}
+```
+
+Output
+
+```text
+undefined
+```
+
+Why?
+
+Because the regular function passed to `setTimeout` gets its own `this`, and it's called as a plain function.
+
+---
+
+Instead
+
+```js
+const user={
+
+name:"Bilal",
+
+greet(){
+
+setTimeout(()=>{
+
+console.log(this.name);
+
+},1000);
+
+}
+
+}
+```
+
+Now
+
+```text
+Bilal
+```
+
+Why?
+
+The arrow function says
+
+> "I won't create my own `this`. I'll use whatever `this` my surrounding function (`greet`) is using."
+
+Since `greet()` was called as
+
+```js
+user.greet();
+```
+
+its `this` is
+
+```text
+user
+```
+
+The arrow function inherits that value, so
+
+```js
+this.name
+```
+
+becomes
+
+```js
+user.name
+```
+
+Result
+
+```text
+Bilal
+```
+
+---
+
+# Summary Table
+
+| Function Call                 | What becomes `this`?                                                        | Example                       |
+| ----------------------------- | --------------------------------------------------------------------------- | ----------------------------- |
+| Normal function               | Global object (non-strict) or `undefined` (strict mode)                     | `show()`                      |
+| Method call                   | The object before the `.`                                                   | `user.greet()`                |
+| `call()`, `apply()`, `bind()` | Whatever object you explicitly provide                                      | `greet.call(user)`            |
+| `new`                         | The newly created object                                                    | `new Person()`                |
+| Arrow function                | It doesn't create its own `this`; it inherits it from the surrounding scope | `setTimeout(() => this.name)` |
+
+## Easy way to remember
+
+Whenever you see `this`, don't ask:
+
+> **"Where was this function written?"**
+
+Instead, always ask:
+
+> **"How is this function being called?"**
+
+That single question explains almost every `this` behavior in JavaScript.

@@ -1,0 +1,495 @@
+---
+title: Higher Order Functions
+description:  Explaining **why** `call`, `apply`, `bind` exists
+---
+
+# Higher-Order Functions (HOF)
+
+## What is a Higher-Order Function?
+
+A **Higher-Order Function (HOF)** is simply a function that does **at least one** of these things:
+
+1. **Accepts another function as an argument**, or
+2. **Returns another function**.
+
+In simple words,
+
+> A Higher-Order Function is a function that works with other functions.
+
+Since JavaScript treats functions as **first-class citizens**, we can store them in variables, pass them as arguments, and return them from other functions.
+
+---
+
+## Why do Higher-Order Functions exist?
+
+Imagine you have many functions that all do almost the same thing.
+
+Without Higher-Order Functions, you would have to rewrite the same code again and again.
+
+Instead, we write the common logic **once**, and pass only the changing behavior as a function.
+
+This makes code:
+
+* Reusable
+* Cleaner
+* Easier to maintain
+* Less repetitive (DRY Principle)
+
+---
+
+# Real-Life Problem
+
+Suppose you're building an online shopping website.
+
+Every time a customer places an order, you want to:
+
+* Save the order
+* Send an email
+* Send an SMS
+* Create an invoice
+* Update stock
+* Notify the admin
+
+A beginner might write separate functions.
+
+```js
+function placeOrder1(order) {
+  console.log("Saving order...");
+
+  console.log("Sending Email...");
+}
+
+function placeOrder2(order) {
+  console.log("Saving order...");
+
+  console.log("Sending SMS...");
+}
+
+function placeOrder3(order) {
+  console.log("Saving order...");
+
+  console.log("Generating Invoice...");
+}
+```
+
+## Problem
+
+Notice this line appears everywhere:
+
+```js
+console.log("Saving order...");
+```
+
+We're repeating the same code again and again.
+
+Imagine after six months you decide to change:
+
+```js
+Saving order...
+```
+
+to
+
+```js
+Saving order in Database...
+```
+
+Now you'll have to update it in **every function**.
+
+This is called **code duplication**.
+
+---
+
+# Solution — Higher-Order Function
+
+Instead of repeating the common work, write it once.
+
+```js
+function placeOrder(order, afterOrder) {
+
+    console.log("Saving order in Database...");
+
+    afterOrder(order);
+
+}
+```
+
+This function doesn't know what should happen after saving the order.
+
+It lets another function decide.
+
+---
+
+## Email
+
+```js
+function sendEmail(order){
+
+    console.log(`Email sent for ${order}`);
+
+}
+```
+
+---
+
+## SMS
+
+```js
+function sendSMS(order){
+
+    console.log(`SMS sent for ${order}`);
+
+}
+```
+
+---
+
+## Invoice
+
+```js
+function generateInvoice(order){
+
+    console.log(`Invoice generated for ${order}`);
+
+}
+```
+
+---
+
+## Using the Higher-Order Function
+
+```js
+placeOrder("Laptop", sendEmail);
+
+placeOrder("Phone", sendSMS);
+
+placeOrder("Headphones", generateInvoice);
+```
+
+### Output
+
+```bash
+Saving order in Database...
+Email sent for Laptop
+
+Saving order in Database...
+SMS sent for Phone
+
+Saving order in Database...
+Invoice generated for Headphones
+```
+
+---
+
+## Why is `placeOrder()` a Higher-Order Function?
+
+Because it receives another function as an argument.
+
+```js
+function placeOrder(order, afterOrder)
+```
+
+Here,
+
+```js
+afterOrder
+```
+
+is a function.
+
+Inside `placeOrder()`, JavaScript executes it.
+
+```js
+afterOrder(order);
+```
+
+Depending on which function we pass,
+
+```js
+placeOrder("Laptop", sendEmail);
+```
+
+or
+
+```js
+placeOrder("Laptop", sendSMS);
+```
+
+or
+
+```js
+placeOrder("Laptop", generateInvoice);
+```
+
+the behavior changes **without changing `placeOrder()` itself**.
+
+---
+
+# Visual Flow
+
+```
+placeOrder("Laptop", sendEmail)
+
+↓
+
+Save Order
+
+↓
+
+sendEmail()
+
+↓
+
+Email Sent
+```
+
+---
+
+```
+placeOrder("Phone", sendSMS)
+
+↓
+
+Save Order
+
+↓
+
+sendSMS()
+
+↓
+
+SMS Sent
+```
+
+Notice that **the saving logic is reused**, while the action performed afterward can change.
+
+---
+
+# Another Practical Example
+
+Imagine a school website.
+
+Every student must first be authenticated before accessing any feature.
+
+Without Higher-Order Functions:
+
+```js
+function viewMarks(student){
+
+    console.log("Checking Login...");
+
+    console.log("Showing Marks");
+
+}
+
+function downloadResult(student){
+
+    console.log("Checking Login...");
+
+    console.log("Downloading Result");
+
+}
+
+function viewFee(student){
+
+    console.log("Checking Login...");
+
+    console.log("Showing Fee");
+
+}
+```
+
+Again,
+
+```js
+console.log("Checking Login...");
+```
+
+is repeated.
+
+---
+
+Using a Higher-Order Function:
+
+```js
+function authenticate(student, action){
+
+    console.log("Checking Login...");
+
+    action(student);
+
+}
+```
+
+Functions:
+
+```js
+function viewMarks(student){
+
+    console.log(`${student} is viewing marks`);
+
+}
+
+function downloadResult(student){
+
+    console.log(`${student} downloaded the result`);
+
+}
+
+function viewFee(student){
+
+    console.log(`${student} is viewing fee details`);
+
+}
+```
+
+Usage:
+
+```js
+authenticate("Ali", viewMarks);
+
+authenticate("Ali", downloadResult);
+
+authenticate("Ali", viewFee);
+```
+
+---
+
+# Higher-Order Functions that Return Functions
+
+A Higher-Order Function can also **return another function**.
+
+Example:
+
+```js
+function multiply(multiplier){
+
+    return function(number){
+
+        return number * multiplier;
+
+    };
+
+}
+```
+
+Usage:
+
+```js
+const double = multiply(2);
+
+const triple = multiply(3);
+
+console.log(double(5)); // 10
+
+console.log(triple(5)); // 15
+```
+
+### How it works
+
+First,
+
+```js
+multiply(2)
+```
+
+returns
+
+```js
+function(number){
+
+    return number * 2;
+
+}
+```
+
+This returned function is stored in
+
+```js
+double
+```
+
+Now,
+
+```js
+double(5)
+```
+
+becomes
+
+```js
+5 * 2
+```
+
+which returns
+
+```
+10
+```
+
+Similarly,
+
+```js
+multiply(3)
+```
+
+creates another function that remembers
+
+```js
+multiplier = 3
+```
+
+This is also an example of a **closure**, because the returned function remembers the `multiplier` variable from its outer function.
+
+---
+
+# Common Built-in Higher-Order Functions
+
+JavaScript itself provides many Higher-Order Functions.
+
+```js
+numbers.map()
+numbers.filter()
+numbers.reduce()
+numbers.forEach()
+numbers.find()
+numbers.some()
+numbers.every()
+setTimeout()
+setInterval()
+addEventListener()
+Promise.then()
+Promise.catch()
+```
+
+All of these either:
+
+* accept another function (callback), or
+* return a new function internally.
+
+---
+
+# Summary
+
+| Concept               | Explanation                                                                                                                                                             |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Higher-Order Function | A function that accepts another function or returns one.                                                                                                                |
+| Main Purpose          | Reuse common logic while allowing customizable behavior.                                                                                                                |
+| Benefits              | Cleaner code, less duplication, easier maintenance, and greater flexibility.                                                                                            |
+| Real-Life Uses        | Event handling, authentication, payment processing, logging, middleware, API requests, callbacks, promises, and array methods like `map()`, `filter()`, and `reduce()`. |
+
+## Easy way to remember
+
+* **Normal function** → Works with **data**.
+
+  ```js
+  add(2, 3);
+  ```
+
+* **Higher-Order Function** → Works with **functions**.
+
+  ```js
+  placeOrder(order, sendEmail);
+  ```
+
+A simple rule of thumb is: **if a function takes another function as input or returns a function as output, it's a Higher-Order Function.**

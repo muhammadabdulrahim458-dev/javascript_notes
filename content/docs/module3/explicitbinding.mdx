@@ -1,0 +1,404 @@
+---
+title: Explicit Binding
+description:  Explaining **why** `call`, `apply`, `bind` exists
+---
+
+# `call()`
+
+## Purpose
+
+`call()` is used to **immediately invoke (run)** a function while explicitly specifying what `this` should refer to.
+
+Normally, when one function calls another, the called function gets its own `this`. Sometimes we want it to use another object's `this` instead. `call()` lets us borrow that `this`.
+
+### Syntax
+
+```js
+functionName.call(thisArg, arg1, arg2, arg3...)
+```
+
+* **thisArg** → Object that should become `this`
+* Remaining arguments → Passed individually
+
+---
+
+## Problem
+
+```js
+function setusername(username) {
+  this.username = username;
+}
+
+function setUser(username, email, city) {
+  setusername(username);
+
+  this.email = email;
+  this.city = city;
+}
+
+let user1 = new setUser("ali", "ali@gmail.com", "Lahore");
+
+console.log(user1);
+```
+
+### Output
+
+```bash
+setUser {
+   email: 'ali@gmail.com',
+   city: 'Lahore'
+}
+```
+
+### Why is `username` missing?
+
+When `setusername(username)` is called like a normal function,
+
+```js
+setusername(username)
+```
+
+it **does not know about the `setUser` object**.
+
+Instead, it gets its own `this`.
+
+Therefore,
+
+```js
+this.username = username
+```
+
+is **not assigned to `user1`**, so the username property is never created.
+
+---
+
+## Solution
+
+Use `call()` to tell `setusername()` which object should become `this`.
+
+```js
+function setusername(username) {
+  this.username = username;
+}
+
+function setUser(username, email, city) {
+
+  setusername.call(this, username);
+
+  this.email = email;
+  this.city = city;
+}
+
+let user1 = new setUser("ali", "ali@gmail.com", "Lahore");
+
+console.log(user1);
+```
+
+### Output
+
+```bash
+setUser {
+  username: 'ali',
+  email: 'ali@gmail.com',
+  city: 'Lahore'
+}
+```
+
+### How it works
+
+```js
+setusername.call(this, username)
+```
+
+means
+
+> "Run `setusername()` right now, but don't use its own `this`. Instead, use the same `this` that belongs to `setUser`."
+
+Now both functions are modifying the **same object**, so the username is correctly added.
+
+---
+
+## When to use `call()`
+
+Use `call()` whenever:
+
+* you want to execute a function immediately
+* you want to manually decide what `this` should be
+* you want one object to borrow another function
+
+---
+
+# `apply()`
+
+## Purpose
+
+`apply()` does **exactly the same job as `call()`**.
+
+The only difference is **how arguments are passed.**
+
+---
+
+## Difference between `call()` and `apply()`
+
+### call()
+
+Arguments are passed one by one.
+
+```js
+func.call(obj, arg1, arg2, arg3);
+```
+
+---
+
+### apply()
+
+Arguments are passed as an array.
+
+```js
+func.apply(obj, [arg1, arg2, arg3]);
+```
+
+---
+
+## Example
+
+```js
+function introduce(city, country) {
+  console.log(
+    `My name is ${this.name}. I live in ${city}, ${country}.`
+  );
+}
+
+const user = {
+  name: "Ali",
+};
+
+introduce.apply(user, ["Lahore", "Pakistan"]);
+```
+
+### Output
+
+```bash
+My name is Ali. I live in Lahore, Pakistan.
+```
+
+---
+
+## Equivalent using `call()`
+
+```js
+introduce.call(user, "Lahore", "Pakistan");
+```
+
+Both produce exactly the same result.
+
+---
+
+## Why does `apply()` exist?
+
+Sometimes the values you want to pass are **already stored inside an array**.
+
+Example:
+
+```js
+const details = ["Lahore", "Pakistan"];
+```
+
+Instead of writing
+
+```js
+func.call(obj, details[0], details[1]);
+```
+
+you can simply write
+
+```js
+func.apply(obj, details);
+```
+
+---
+
+## When to use `apply()`
+
+Use `apply()` when
+
+* you want to choose `this`
+* your arguments are already stored inside an array
+
+Otherwise, `call()` is usually cleaner.
+
+---
+
+# `bind()`
+
+## Purpose
+
+Unlike `call()` and `apply()`, `bind()` **does not execute the function immediately**.
+
+Instead, it creates a **new function** whose `this` is permanently fixed.
+
+You can execute that new function later whenever needed.
+
+---
+
+## Syntax
+
+```js
+const newFunction = oldFunction.bind(thisArg);
+```
+
+---
+
+## Example
+
+```html
+<!doctype html>
+<html lang="en">
+<body>
+
+<button>Bind Example</button>
+
+<script>
+
+class React {
+
+    constructor(){
+        this.username = "My App";
+        this.server = "https://localhost:3000";
+    }
+
+    handleClick(){
+
+        console.log("Button Clicked");
+        console.log(this.username);
+        console.log(this.server);
+
+    }
+
+}
+
+const app = new React();
+
+document
+.querySelector("button")
+.addEventListener(
+    "click",
+    app.handleClick.bind(app)
+);
+
+</script>
+
+</body>
+</html>
+```
+
+---
+
+## Why do we need `bind()`?
+
+When JavaScript executes
+
+```js
+app.handleClick()
+```
+
+the object before the dot (`app`) becomes `this`.
+
+```
+this → app
+```
+
+Everything works correctly.
+
+---
+
+But inside an event listener,
+
+```js
+addEventListener("click", app.handleClick)
+```
+
+the browser calls the function like this:
+
+```js
+button.handleClick()
+```
+
+Now,
+
+```
+this → button
+```
+
+instead of
+
+```
+this → app
+```
+
+So
+
+```js
+this.username
+```
+
+becomes
+
+```js
+undefined
+```
+
+because the button doesn't have a `username`.
+
+---
+
+## Solution
+
+```js
+app.handleClick.bind(app)
+```
+
+creates a brand new function whose `this` is permanently fixed to `app`.
+
+Now, regardless of who calls it,
+
+```js
+this === app
+```
+
+so
+
+```js
+this.username
+```
+
+and
+
+```js
+this.server
+```
+
+work correctly.
+
+---
+
+## Important Difference
+
+| Method  | Executes Immediately | Returns New Function |
+| ------- | -------------------- | -------------------- |
+| call()  | ✅ Yes                | ❌ No                 |
+| apply() | ✅ Yes                | ❌ No                 |
+| bind()  | ❌ No                 | ✅ Yes                |
+
+---
+
+## When to use `bind()`
+
+Use `bind()` whenever a function will be executed later by another piece of code, such as:
+
+* Event listeners
+* `setTimeout()`
+* `setInterval()`
+* Callbacks
+* Promise handlers
+

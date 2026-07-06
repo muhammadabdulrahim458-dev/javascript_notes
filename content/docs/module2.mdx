@@ -256,11 +256,16 @@ console.log(original.address.city); // still "Karachi" — fully independent
 const frozen = Object.freeze({ score: 100 });
 frozen.score = 200; // silently fails (or throws in strict mode)
 console.log(frozen.score); // still 100
+```
 
+
+```js
 const sealed = Object.seal({ score: 100 });
+console.log(sealed.score); // 100
 sealed.score = 200; // this works!
-sealed.newProp = "x"; // this does NOT work
+sealed.gpa =  3.6  // this does NOT work - you cannot add new property
 console.log(sealed.score); // 200
+console.log(score); // {score:200}
 ```
 
 <Callout title="Gotcha" type="warn">

@@ -1,0 +1,14 @@
+{
+  "title": "Module 3",
+  "icon": "GitBranch",
+  "pages": [
+    "index",
+    "lexical_closure",
+    "this",
+    "explicitbinding",
+    "hofs",
+    "curry_partial",
+    "functionComposition",
+    "quickRevision"
+  ]
+}

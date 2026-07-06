@@ -1,0 +1,592 @@
+---
+title: Currying And Partial 
+description:  Currying & Partial Application
+---
+
+# Currying & Partial Application
+
+These two concepts are closely related and are often confused because both involve **breaking a function into smaller pieces**. However, they solve slightly different problems.
+
+---
+
+# Why do we need them?
+
+Imagine you have a function that requires many arguments.
+
+```js
+calculatePrice(price, tax, discount)
+```
+
+Now suppose your store always uses:
+
+* Tax = **18%**
+* Discount = **10%**
+
+You don't want to write
+
+```js
+calculatePrice(1000, 18, 10);
+calculatePrice(500, 18, 10);
+calculatePrice(2000, 18, 10);
+calculatePrice(1500, 18, 10);
+```
+
+again and again.
+
+You're repeatedly passing the same values.
+
+There should be a better way.
+
+That's where **Partial Application** and **Currying** come in.
+
+---
+
+# Partial Application
+
+## What is Partial Application?
+
+Partial Application means
+
+> **Fix (pre-fill) some arguments now and provide the remaining arguments later.**
+
+Instead of calling a function with all arguments every time,
+
+```js
+calculatePrice(price, tax, discount)
+```
+
+we can permanently fix
+
+```text
+tax = 18
+discount = 10
+```
+
+and only provide
+
+```text
+price
+```
+
+later.
+
+---
+
+## Real-Life Problem
+
+Without Partial Application
+
+```js
+function calculatePrice(price, tax, discount) {
+
+    const taxAmount = price * tax / 100;
+    const finalPrice = price + taxAmount - discount;
+
+    console.log(finalPrice);
+
+}
+
+calculatePrice(1000,18,10);
+calculatePrice(500,18,10);
+calculatePrice(2000,18,10);
+calculatePrice(1500,18,10);
+```
+
+Notice we're repeating
+
+```text
+18,10
+```
+
+every time.
+
+---
+
+## Solution
+
+Create another function that already remembers tax and discount.
+
+```js
+function partialCalculatePrice(tax, discount){
+
+    return function(price){
+
+        const taxAmount = price * tax / 100;
+
+        return price + taxAmount - discount;
+
+    }
+
+}
+```
+
+Now,
+
+```js
+const pakistanStore = partialCalculatePrice(18,10);
+```
+
+creates a function where
+
+```text
+tax = 18
+
+discount = 10
+```
+
+are permanently remembered.
+
+Usage:
+
+```js
+console.log(pakistanStore(1000));
+
+console.log(pakistanStore(500));
+
+console.log(pakistanStore(2000));
+```
+
+Output
+
+```bash
+1170
+
+580
+
+2350
+```
+
+---
+
+## How it works
+
+Step 1
+
+```js
+const pakistanStore = partialCalculatePrice(18,10);
+```
+
+returns
+
+```js
+function(price){
+
+    const taxAmount = price * 18 /100;
+
+    return price + taxAmount -10;
+
+}
+```
+
+Now JavaScript stores this returned function inside
+
+```text
+pakistanStore
+```
+
+Later,
+
+```js
+pakistanStore(1000)
+```
+
+only needs the missing argument.
+
+---
+
+## Practical Uses
+
+Partial Application is useful when:
+
+* Currency conversion
+* Fixed tax rates
+* Country-specific calculations
+* API URLs
+* Configuration objects
+* Logging functions
+* Database connections
+
+Whenever some arguments remain the same for many function calls.
+
+---
+
+# Currying
+
+## What is Currying?
+
+Currying means
+
+> Converting a function that takes multiple arguments into a sequence of functions where each function takes **exactly one argument**.
+
+Normal function
+
+```js
+add(a,b,c)
+```
+
+Curried version
+
+```js
+add(a)(b)(c)
+```
+
+Instead of passing all arguments together,
+
+each function accepts **only one argument** and returns another function until all arguments are collected.
+
+---
+
+## Syntax
+
+Normal
+
+```js
+function add(a,b,c){
+
+    return a+b+c;
+
+}
+```
+
+Curried
+
+```js
+function add(a){
+
+    return function(b){
+
+        return function(c){
+
+            return a+b+c;
+
+        }
+
+    }
+
+}
+```
+
+Usage
+
+```js
+console.log(add(2)(3)(4));
+```
+
+Output
+
+```bash
+9
+```
+
+---
+
+# How Currying works
+
+When JavaScript executes
+
+```js
+add(2)
+```
+
+it returns
+
+```js
+function(b){
+
+    return function(c){
+
+        return 2+b+c;
+
+    }
+
+}
+```
+
+Now JavaScript waits for
+
+```text
+b
+```
+
+Then
+
+```js
+add(2)(3)
+```
+
+returns
+
+```js
+function(c){
+
+    return 2+3+c;
+
+}
+```
+
+Finally,
+
+```js
+add(2)(3)(4)
+```
+
+becomes
+
+```text
+2+3+4
+```
+
+Result
+
+```bash
+9
+```
+
+Each returned function remembers previous values using **closures**.
+
+---
+
+# Real-Life Example
+
+Suppose you're sending notifications.
+
+Normal function
+
+```js
+sendNotification(platform,priority,message)
+```
+
+Usage
+
+```js
+sendNotification("Email","High","Server Down");
+
+sendNotification("Email","High","Database Error");
+
+sendNotification("Email","High","Payment Failed");
+```
+
+Again,
+
+```text
+Email
+
+High
+```
+
+are repeated.
+
+---
+
+## Curried Version
+
+```js
+function sendNotification(platform){
+
+    return function(priority){
+
+        return function(message){
+
+            console.log(
+
+                `[${platform}] (${priority}) ${message}`
+
+            );
+
+        }
+
+    }
+
+}
+```
+
+Create
+
+```js
+const emailHigh =
+
+sendNotification("Email")("High");
+```
+
+Usage
+
+```js
+emailHigh("Server Down");
+
+emailHigh("Database Error");
+
+emailHigh("Payment Failed");
+```
+
+Output
+
+```bash
+[Email] (High) Server Down
+
+[Email] (High) Database Error
+
+[Email] (High) Payment Failed
+```
+
+Notice how we fixed the first two arguments and only supplied the last one later.
+
+---
+
+# Partial Application vs Currying
+
+Although they look similar, they are **not the same concept**.
+
+| Partial Application                                                 | Currying                                               |
+| ------------------------------------------------------------------- | ------------------------------------------------------ |
+| Pre-fills some arguments.                                           | Breaks a function into many single-argument functions. |
+| Remaining arguments can be one or many.                             | Every function accepts exactly one argument.           |
+| Goal is convenience and reuse.                                      | Goal is transforming the function's structure.         |
+| Example: `f(1,2)` returns a function expecting remaining arguments. | Example: `f(1)(2)(3)`                                  |
+
+---
+
+## Example Comparison
+
+### Normal Function
+
+```js
+function multiply(a,b,c){
+
+    return a*b*c;
+
+}
+```
+
+---
+
+### Partial Application
+
+```js
+function partialMultiply(a){
+
+    return function(b,c){
+
+        return a*b*c;
+
+    }
+
+}
+
+const double = partialMultiply(2);
+
+console.log(double(3,4));
+```
+
+Output
+
+```bash
+24
+```
+
+Notice the second function still accepts **two arguments**.
+
+---
+
+### Currying
+
+```js
+function multiply(a){
+
+    return function(b){
+
+        return function(c){
+
+            return a*b*c;
+
+        }
+
+    }
+
+}
+
+console.log(multiply(2)(3)(4));
+```
+
+Output
+
+```bash
+24
+```
+
+Notice every function accepts **exactly one argument**.
+
+---
+
+# Relationship with Closures
+
+Both Partial Application and Currying work because of **closures**.
+
+Example
+
+```js
+function multiply(a){
+
+    return function(b){
+
+        return a*b;
+
+    }
+
+}
+```
+
+Even after `multiply()` finishes, the returned function still remembers
+
+```text
+a
+```
+
+That remembered value is stored by a **closure**.
+
+Without closures, neither currying nor partial application would work.
+
+---
+
+# Practical Uses
+
+Currying and Partial Application are common in:
+
+* React event handlers
+* Redux middleware
+* Express middleware
+* Functional programming libraries (e.g., Lodash, Ramda)
+* API wrappers
+* Logging utilities
+* Authentication helpers
+* Validation functions
+* Price/tax calculations
+* Internationalization (fixed language or locale)
+
+---
+
+# Summary
+
+| Concept                 | Explanation                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------- |
+| **Partial Application** | Fix some arguments now, provide the rest later.                              |
+| **Currying**            | Convert a multi-argument function into a chain of single-argument functions. |
+| **Common Foundation**   | Both rely on **closures** to remember previously supplied values.            |
+
+## Easy way to remember
+
+* **Partial Application** → "**Some now, the rest later.**"
+
+  ```js
+  calculatePrice(18, 10) → returns a function that only needs price
+  ```
+
+* **Currying** → "**One argument at a time.**"
+
+  ```js
+  add(2)(3)(4)
+  ```
+
+A useful rule of thumb is:
+
+* If the returned function can still take **multiple remaining arguments**, it's **Partial Application**.
+* If **every step takes exactly one argument**, it's **Currying**.
