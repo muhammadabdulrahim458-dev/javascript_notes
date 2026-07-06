@@ -1,8 +1,9 @@
 ---
 title: Function Composition
-description:  Explaining **why** `call`, `apply`, `bind` exists
+description:  Explaining why call,apply,bind exists
 ---
 
+# Function Composition
 
 ## What is Function Composition?
 
@@ -26,11 +27,21 @@ Packaging
 Finished Product
 ```
 
-Each worker performs only one task.
-
-The output of one worker becomes the input for the next worker.
-
+Each worker performs only one task.  
+The output of one worker becomes the input for the next worker.  
 Function Composition works exactly the same way.
+
+---
+
+### Visual Pipeline
+
+```mermaid
+flowchart LR
+    I[Input] --> A[applyDiscount]
+    A --> B[addTax]
+    B --> C[formatPrice]
+    C --> O[Output]
+```
 
 ---
 
@@ -48,13 +59,9 @@ A beginner may write everything inside one function.
 
 ```js
 function processPrice(price){
-
     let discounted = price - 100;
-
     let taxed = discounted * 1.18;
-
     return `Rs. ${taxed}`;
-
 }
 
 console.log(processPrice(1000));
@@ -78,13 +85,9 @@ Everything is mixed together.
 
 ```
 Discount Logic
-
-↓
-
+    ↓
 Tax Logic
-
-↓
-
+    ↓
 Formatting Logic
 ```
 
@@ -106,21 +109,15 @@ Break the work into small reusable functions.
 
 ```js
 function applyDiscount(price){
-
     return price - 100;
-
 }
 
 function addTax(price){
-
     return price * 1.18;
-
 }
 
 function formatPrice(price){
-
     return `Rs. ${price}`;
-
 }
 ```
 
@@ -134,11 +131,8 @@ Now we can connect them together.
 
 ```js
 const discounted = applyDiscount(1000);
-
 const taxed = addTax(discounted);
-
 const result = formatPrice(taxed);
-
 console.log(result);
 ```
 
@@ -162,32 +156,25 @@ Let's write a helper.
 
 ```js
 function compose(f, g){
-
     return function(value){
-
         return f(g(value));
-
     }
-
 }
 ```
-# Best Example: 
+
+### A Modern Example (with spread for multiple arguments)
 
 ```js
-let add = (...args) =>
-  args.reduce((sum, acc) => {
-    return acc + sum;
-  }, 0);
+const add = (...args) => args.reduce((sum, acc) => acc + sum, 0);
 
+const square = (x) => x * x;
 
-let square = (x) => x * x;
-
-let compose = (fn1, fn2) => {
-  return (...args) => fn2(fn1(...args));
+const compose = (fn1, fn2) => {
+    return (...args) => fn2(fn1(...args));
 };
 
-let result = compose(add, square);
-console.log(result(2, 3));
+const result = compose(add, square);
+console.log(result(2, 3)); // add(2,3) = 5 → square(5) = 25
 ```
 
 ---
@@ -197,8 +184,7 @@ console.log(result(2, 3));
 Suppose
 
 ```js
-const calculatePrice =
-compose(formatPrice, addTax);
+const calculatePrice = compose(formatPrice, addTax);
 ```
 
 This creates a new function.
@@ -207,13 +193,9 @@ Internally it behaves like
 
 ```js
 function(value){
-
     return formatPrice(
-
         addTax(value)
-
     );
-
 }
 ```
 
@@ -221,17 +203,11 @@ Notice
 
 ```
 Input
-
-↓
-
+  ↓
 addTax()
-
-↓
-
+  ↓
 formatPrice()
-
-↓
-
+  ↓
 Output
 ```
 
@@ -243,21 +219,14 @@ The output of one function becomes the input of the next function.
 
 ```js
 function addTax(price){
-
     return price * 1.18;
-
 }
 
 function formatPrice(price){
-
     return `Rs. ${price}`;
-
 }
 
-const calculatePrice =
-
-compose(formatPrice, addTax);
-
+const calculatePrice = compose(formatPrice, addTax);
 console.log(calculatePrice(1000));
 ```
 
@@ -275,15 +244,11 @@ Usually we want more than two functions.
 
 Suppose
 
-```js
+```
 applyDiscount()
-
-↓
-
+    ↓
 addTax()
-
-↓
-
+    ↓
 formatPrice()
 ```
 
@@ -291,19 +256,12 @@ We can write a generic compose function.
 
 ```js
 function compose(...functions){
-
     return function(value){
-
         return functions.reduceRight(
-
             (result, fn) => fn(result),
-
             value
-
         );
-
     }
-
 }
 ```
 
@@ -313,31 +271,21 @@ function compose(...functions){
 
 ```js
 function applyDiscount(price){
-
     return price - 100;
-
 }
 
 function addTax(price){
-
     return price * 1.18;
-
 }
 
 function formatPrice(price){
-
     return `Rs. ${price}`;
-
 }
 
 const processPrice = compose(
-
     formatPrice,
-
     addTax,
-
     applyDiscount
-
 );
 
 console.log(processPrice(1000));
@@ -417,29 +365,17 @@ Execution Flow
 
 ```
 1000
-
-↓
-
+  ↓
 applyDiscount()
-
-↓
-
+  ↓
 900
-
-↓
-
+  ↓
 addTax()
-
-↓
-
+  ↓
 1062
-
-↓
-
+  ↓
 formatPrice()
-
-↓
-
+  ↓
 Rs. 1062
 ```
 
@@ -451,13 +387,9 @@ Notice the order.
 
 ```js
 compose(
-
     formatPrice,
-
     addTax,
-
     applyDiscount
-
 )
 ```
 
@@ -465,13 +397,9 @@ We want
 
 ```
 applyDiscount()
-
-↓
-
+    ↓
 addTax()
-
-↓
-
+    ↓
 formatPrice()
 ```
 
@@ -487,19 +415,12 @@ It starts from the rightmost function.
 
 ```js
 function compose(...functions){
-
     return function(value){
-
         return functions.reduce(
-
-            (result, fn)=>fn(result),
-
+            (result, fn) => fn(result),
             value
-
         );
-
     }
-
 }
 ```
 
@@ -507,13 +428,9 @@ Now execution becomes
 
 ```
 formatPrice()
-
-↓
-
+    ↓
 addTax()
-
-↓
-
+    ↓
 applyDiscount()
 ```
 
@@ -563,6 +480,22 @@ This is why **composition runs from right to left**.
 
 ---
 
+### Visual: Compose Order
+
+```mermaid
+flowchart LR
+    subgraph Compose["compose(f3, f2, f1)"]
+        direction LR
+        I2[Input] --> F1["f1()"]
+        F1 --> F2["f2()"]
+        F2 --> F3["f3()"]
+        F3 --> O2[Output]
+    end
+    Compose --> Note["Execution: right → left"]
+```
+
+---
+
 # Real-Life Example (Image Upload)
 
 Imagine Instagram uploads an image.
@@ -573,21 +506,13 @@ it performs several operations.
 
 ```
 Original Image
-
-↓
-
+    ↓
 Resize Image
-
-↓
-
+    ↓
 Compress Image
-
-↓
-
+    ↓
 Add Watermark
-
-↓
-
+    ↓
 Upload
 ```
 
@@ -595,17 +520,11 @@ Each function does only one task.
 
 ```js
 resize(image)
-
-↓
-
+    ↓
 compress(image)
-
-↓
-
+    ↓
 watermark(image)
-
-↓
-
+    ↓
 upload(image)
 ```
 
@@ -633,21 +552,15 @@ Functions
 
 ```js
 function trim(text){
-
     return text.trim();
-
 }
 
 function upper(text){
-
     return text.toUpperCase();
-
 }
 
 function exclaim(text){
-
     return text + "!";
-
 }
 ```
 
@@ -655,19 +568,13 @@ Compose them
 
 ```js
 const process = compose(
-
     exclaim,
-
     upper,
-
     trim
-
 );
 
 console.log(
-
     process("    hello world    ")
-
 );
 ```
 
@@ -681,29 +588,17 @@ Flow
 
 ```
 "   hello world   "
-
-↓
-
+    ↓
 trim()
-
-↓
-
+    ↓
 "hello world"
-
-↓
-
+    ↓
 upper()
-
-↓
-
+    ↓
 "HELLO WORLD"
-
-↓
-
+    ↓
 exclaim()
-
-↓
-
+    ↓
 "HELLO WORLD!"
 ```
 
@@ -738,17 +633,11 @@ Runs **Right → Left**
 
 ```js
 compose(c, b, a)
-
-↓
-
+   ↓
 a()
-
-↓
-
+   ↓
 b()
-
-↓
-
+   ↓
 c()
 ```
 
@@ -766,17 +655,11 @@ Runs **Left → Right**
 
 ```js
 pipe(a, b, c)
-
-↓
-
+   ↓
 a()
-
-↓
-
+   ↓
 b()
-
-↓
-
+   ↓
 c()
 ```
 
@@ -787,6 +670,22 @@ functions.reduce(...)
 ```
 
 Many developers find `pipe()` easier to read because it follows the natural left-to-right flow of execution.
+
+---
+
+### Mermaid: compose vs pipe
+
+```mermaid
+flowchart LR
+    subgraph Compose["compose (right‑to‑left)"]
+        direction LR
+        C1[Input] --> C2["a()"] --> C3["b()"] --> C4["c()"] --> C5[Output]
+    end
+    subgraph Pipe["pipe (left‑to‑right)"]
+        direction LR
+        P1[Input] --> P2["a()"] --> P3["b()"] --> P4["c()"] --> P5[Output]
+    end
+```
 
 ---
 
@@ -821,21 +720,13 @@ Think of **Function Composition** like a **water pipeline**:
 
 ```
 Input
-
-↓
-
+  ↓
 Function A
-
-↓
-
+  ↓
 Function B
-
-↓
-
+  ↓
 Function C
-
-↓
-
+  ↓
 Final Output
 ```
 

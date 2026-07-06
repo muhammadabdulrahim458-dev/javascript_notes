@@ -3,13 +3,33 @@ title: Currying And Partial
 description:  Currying & Partial Application
 ---
 
-# Currying & Partial Application
 
 These two concepts are closely related and are often confused because both involve **breaking a function into smaller pieces**. However, they solve slightly different problems.
 
+
+### Visual Overview
+
+```mermaid
+flowchart TB
+    subgraph Normal
+        F["f(a, b, c)"] --> R["result"]
+    end
+
+    subgraph Partial
+        P["f(a, b)"] --> G["g(c)"]
+        G --> R2["result"]
+    end
+
+    subgraph Currying
+        C["f(a)"] --> H["h(b)"]
+        H --> I["i(c)"]
+        I --> R3["result"]
+    end
+```
+
 ---
 
-# Why do we need them?
+## Why do we need them?
 
 Imagine you have a function that requires many arguments.
 
@@ -41,9 +61,9 @@ That's where **Partial Application** and **Currying** come in.
 
 ---
 
-# Partial Application
+## Partial Application 
 
-## What is Partial Application?
+### What is Partial Application?
 
 Partial Application means
 
@@ -78,12 +98,9 @@ Without Partial Application
 
 ```js
 function calculatePrice(price, tax, discount) {
-
     const taxAmount = price * tax / 100;
     const finalPrice = price + taxAmount - discount;
-
     console.log(finalPrice);
-
 }
 
 calculatePrice(1000,18,10);
@@ -108,15 +125,10 @@ Create another function that already remembers tax and discount.
 
 ```js
 function partialCalculatePrice(tax, discount){
-
     return function(price){
-
         const taxAmount = price * tax / 100;
-
         return price + taxAmount - discount;
-
     }
-
 }
 ```
 
@@ -130,7 +142,6 @@ creates a function where
 
 ```text
 tax = 18
-
 discount = 10
 ```
 
@@ -140,9 +151,7 @@ Usage:
 
 ```js
 console.log(pakistanStore(1000));
-
 console.log(pakistanStore(500));
-
 console.log(pakistanStore(2000));
 ```
 
@@ -150,9 +159,7 @@ Output
 
 ```bash
 1170
-
 580
-
 2350
 ```
 
@@ -170,11 +177,8 @@ returns
 
 ```js
 function(price){
-
     const taxAmount = price * 18 /100;
-
     return price + taxAmount -10;
-
 }
 ```
 
@@ -210,9 +214,9 @@ Whenever some arguments remain the same for many function calls.
 
 ---
 
-# Currying
-
-## What is Currying?
+## Currying 
+![curry](/curry.jpg)
+### What is Currying?
 
 Currying means
 
@@ -242,9 +246,7 @@ Normal
 
 ```js
 function add(a,b,c){
-
     return a+b+c;
-
 }
 ```
 
@@ -252,17 +254,11 @@ Curried
 
 ```js
 function add(a){
-
     return function(b){
-
         return function(c){
-
             return a+b+c;
-
         }
-
     }
-
 }
 ```
 
@@ -292,13 +288,9 @@ it returns
 
 ```js
 function(b){
-
     return function(c){
-
         return 2+b+c;
-
     }
-
 }
 ```
 
@@ -318,9 +310,7 @@ returns
 
 ```js
 function(c){
-
     return 2+3+c;
-
 }
 ```
 
@@ -346,7 +336,7 @@ Each returned function remembers previous values using **closures**.
 
 ---
 
-# Real-Life Example
+## Real-Life Example
 
 Suppose you're sending notifications.
 
@@ -360,9 +350,7 @@ Usage
 
 ```js
 sendNotification("Email","High","Server Down");
-
 sendNotification("Email","High","Database Error");
-
 sendNotification("Email","High","Payment Failed");
 ```
 
@@ -370,7 +358,6 @@ Again,
 
 ```text
 Email
-
 High
 ```
 
@@ -382,39 +369,27 @@ are repeated.
 
 ```js
 function sendNotification(platform){
-
     return function(priority){
-
         return function(message){
-
             console.log(
-
                 `[${platform}] (${priority}) ${message}`
-
             );
-
         }
-
     }
-
 }
 ```
 
 Create
 
 ```js
-const emailHigh =
-
-sendNotification("Email")("High");
+const emailHigh = sendNotification("Email")("High");
 ```
 
 Usage
 
 ```js
 emailHigh("Server Down");
-
 emailHigh("Database Error");
-
 emailHigh("Payment Failed");
 ```
 
@@ -422,9 +397,7 @@ Output
 
 ```bash
 [Email] (High) Server Down
-
 [Email] (High) Database Error
-
 [Email] (High) Payment Failed
 ```
 
@@ -432,7 +405,7 @@ Notice how we fixed the first two arguments and only supplied the last one later
 
 ---
 
-# Partial Application vs Currying
+## Partial Application vs Currying ❤️
 
 Although they look similar, they are **not the same concept**.
 
@@ -451,9 +424,7 @@ Although they look similar, they are **not the same concept**.
 
 ```js
 function multiply(a,b,c){
-
     return a*b*c;
-
 }
 ```
 
@@ -463,17 +434,12 @@ function multiply(a,b,c){
 
 ```js
 function partialMultiply(a){
-
     return function(b,c){
-
         return a*b*c;
-
     }
-
 }
 
 const double = partialMultiply(2);
-
 console.log(double(3,4));
 ```
 
@@ -491,17 +457,11 @@ Notice the second function still accepts **two arguments**.
 
 ```js
 function multiply(a){
-
     return function(b){
-
         return function(c){
-
             return a*b*c;
-
         }
-
     }
-
 }
 
 console.log(multiply(2)(3)(4));
@@ -525,13 +485,9 @@ Example
 
 ```js
 function multiply(a){
-
     return function(b){
-
         return a*b;
-
     }
-
 }
 ```
 

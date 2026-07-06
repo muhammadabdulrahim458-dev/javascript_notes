@@ -1,0 +1,600 @@
+---
+title: Interview Practice Questions
+description:  Interview Practice Questions from module 3
+icon: BriefcaseBusiness
+---
+
+<Callout type="success">
+These questions are designed in the style commonly asked in JavaScript interviews. They progress from beginner to advanced and cover both conceptual understanding and coding ability.
+</Callout>
+
+
+---
+
+# 1. Lexical Scoping Chains
+
+## Conceptual Questions
+
+### Easy
+
+1. What is lexical scope in JavaScript?
+2. What is the difference between scope and lexical scope?
+3. How does JavaScript determine where a variable is located?
+4. What is a scope chain?
+5. What happens if JavaScript cannot find a variable in the current scope?
+6. Can an inner function access variables of its parent function? Why?
+7. Can a parent function access variables of its child function? Why not?
+8. What is Global Scope?
+9. What is Function Scope?
+10. What is Block Scope?
+
+---
+
+### Intermediate
+
+11. Explain how JavaScript searches for variables using the scope chain.
+12. Why is lexical scope decided at write-time rather than run-time?
+13. What is variable shadowing?
+14. What is the difference between shadowing and reassignment?
+15. Explain the output.
+
+```js
+let x = 10;
+
+function outer() {
+
+    let x = 20;
+
+    function inner() {
+
+        console.log(x);
+
+    }
+
+    inner();
+
+}
+
+outer();
+```
+
+16. Explain the output.
+
+```js
+let name = "Ali";
+
+function one() {
+
+    function two() {
+
+        console.log(name);
+
+    }
+
+    two();
+
+}
+
+one();
+```
+
+17. Explain the output.
+
+```js
+function one(){
+
+    let a = 10;
+
+    function two(){
+
+        let b = 20;
+
+    }
+
+    console.log(b);
+
+}
+
+one();
+```
+
+18. What is lexical environment?
+
+19. Explain the relationship between Execution Context and Lexical Environment.
+
+20. Why doesn't JavaScript search child scopes for variables?
+
+---
+
+### Coding Questions
+
+1. Write a function demonstrating lexical scope.
+2. Demonstrate variable shadowing.
+3. Create three nested functions and print a variable declared in the outermost function.
+4. Explain every scope in the following code.
+
+---
+
+# 2. Closures Deep Dive
+
+## Conceptual Questions
+
+### Easy
+
+1. What is a closure?
+2. Why do closures exist?
+3. What does a closure remember?
+4. When is a closure created?
+5. Is every nested function a closure?
+
+---
+
+### Intermediate
+
+6. Explain why this works.
+
+```js
+function outer(){
+
+    let count = 0;
+
+    return function(){
+
+        count++;
+
+        console.log(count);
+
+    }
+
+}
+
+const counter = outer();
+
+counter();
+
+counter();
+```
+
+7. Why isn't `count` destroyed after `outer()` finishes?
+8. What is the relationship between closures and lexical scope?
+9. Explain how JavaScript stores closed-over variables.
+10. What is the Closure Scope?
+
+---
+
+### Advanced
+
+11. What memory problems can closures cause?
+12. How can closures lead to memory leaks?
+13. Why are closures heavily used in React?
+14. Explain closures using Execution Context.
+15. Can closures remember objects as well as primitive values?
+
+---
+
+### Coding Questions
+
+1. Create a counter using closures.
+2. Create a private bank account using closures.
+3. Create a private password manager.
+4. Implement a function that remembers previous values.
+5. Create a function factory using closures.
+
+---
+
+### Practical Questions
+
+1. Why are closures used in Event Listeners?
+2. Why are closures used in setTimeout()?
+3. Why do React Hooks depend on closures?
+
+---
+
+# Persisting State Safely & Data Privacy
+
+## Conceptual Questions
+
+1. Why do we need data privacy in JavaScript?
+2. How do closures help create private variables?
+3. Why can't outside code modify private variables?
+4. What is encapsulation?
+5. Explain the Module Pattern.
+
+---
+
+### Coding Questions
+
+1. Build a private counter.
+2. Build a private shopping cart.
+3. Build a login system where password remains private.
+4. Build a simple Bank Account using closures.
+
+---
+
+# 3. The `this` Keyword
+
+## Conceptual Questions
+
+### Easy
+
+1. What is `this`?
+2. Is `this` decided at write-time or call-time?
+3. What determines the value of `this`?
+4. What are the four binding rules?
+5. What is default binding?
+6. What is implicit binding?
+7. What is explicit binding?
+8. What is new binding?
+
+---
+
+### Intermediate
+
+9. Explain the output.
+
+```js
+function show(){
+
+    console.log(this);
+
+}
+
+show();
+```
+
+10. Explain the output.
+
+```js
+const user={
+
+    name:"Ali",
+
+    greet(){
+
+        console.log(this.name);
+
+    }
+
+};
+
+user.greet();
+```
+
+11. Explain why this works.
+
+```js
+greet.call(user);
+```
+
+12. Explain why `bind()` exists.
+13. Explain why `apply()` exists.
+14. Explain why arrow functions don't have their own `this`.
+15. Why does `this` become undefined inside callbacks?
+
+---
+
+### Advanced
+
+16. Explain the internal working of `new`.
+17. Which binding rule has the highest priority?
+18. Can `bind()` override `new`?
+19. Explain lexical `this`.
+20. Explain the difference between closures and `this`.
+
+---
+
+### Coding Questions
+
+1. Fix the bug.
+
+```js
+const user={
+
+    name:"Ali",
+
+    greet(){
+
+        console.log(this.name);
+
+    }
+
+};
+
+setTimeout(user.greet,1000);
+```
+
+2. Implement your own version of `bind()`.
+
+3. Predict the output.
+
+```js
+const obj={
+
+name:"Ali",
+
+show(){
+
+return function(){
+
+console.log(this.name);
+
+}
+
+}
+
+};
+
+obj.show()();
+```
+
+4. Explain the output.
+
+```js
+const obj={
+
+name:"Ali",
+
+show(){
+
+return ()=>{
+
+console.log(this.name);
+
+}
+
+}
+
+};
+
+obj.show()();
+```
+
+---
+
+# 4. Explicit Binding (.call(), .apply(), .bind())
+
+## Conceptual Questions
+
+### Easy
+
+1. Why do `.call()`, `.apply()`, and `.bind()` exist?
+2. What problem do they solve?
+3. Difference between call and apply?
+4. Difference between call and bind?
+5. Which method returns a new function?
+
+---
+
+### Intermediate
+
+6. When should you use `.apply()`?
+7. When should you use `.bind()`?
+8. Why is `bind()` useful in event listeners?
+9. Explain Function Borrowing.
+10. Explain Method Borrowing.
+
+---
+
+### Coding Questions
+
+1. Borrow one object's method for another object.
+2. Rewrite a callback using `bind()`.
+3. Implement your own `call()`.
+4. Implement your own `apply()`.
+5. Implement your own `bind()`.
+
+---
+
+# 5. Advanced Functional Patterns
+
+---
+
+# Higher-Order Functions (HOFs)
+
+## Conceptual Questions
+
+### Easy
+
+1. What is a Higher-Order Function?
+2. Why are Higher-Order Functions useful?
+3. Give five built-in Higher-Order Functions.
+4. Is `map()` a Higher-Order Function? Why?
+5. Is `filter()` a Higher-Order Function?
+
+---
+
+### Intermediate
+
+6. Difference between callback and Higher-Order Function?
+7. Can a Higher-Order Function return another function?
+8. Explain the relationship between HOFs and callbacks.
+9. Explain the DRY principle using HOFs.
+10. Explain the output.
+
+```js
+function operation(a,b,fn){
+
+return fn(a,b);
+
+}
+```
+
+---
+
+### Coding Questions
+
+1. Create your own `map()`.
+2. Create your own `filter()`.
+3. Create your own `reduce()`.
+4. Create a reusable logger using HOFs.
+5. Create an authentication wrapper.
+
+---
+
+# Pure Functions & Side Effects
+
+## Conceptual Questions
+
+### Easy
+
+1. What is a Pure Function?
+2. What is a Side Effect?
+3. Why are Pure Functions predictable?
+4. Why are Side Effects dangerous?
+
+---
+
+### Intermediate
+
+5. Is this function pure?
+
+```js
+function add(a,b){
+
+return a+b;
+
+}
+```
+
+6. Is this pure?
+
+```js
+let total=0;
+
+function add(x){
+
+total+=x;
+
+}
+```
+
+Explain.
+
+7. Name five common side effects.
+8. Why are React reducers required to be pure?
+
+---
+
+### Coding Questions
+
+1. Convert an impure function into a pure one.
+2. Remove side effects from a function.
+3. Refactor a function to avoid mutating objects.
+
+---
+
+# Currying & Partial Application
+
+## Conceptual Questions
+
+### Easy
+
+1. What is currying?
+2. What is partial application?
+3. Difference between currying and partial application?
+4. Why do we use currying?
+5. Why does currying rely on closures?
+
+---
+
+### Intermediate
+
+6. Explain this.
+
+```js
+add(2)(3)(4);
+```
+
+7. Explain why this is partial application.
+
+```js
+const multiplyBy2=multiply.bind(null,2);
+```
+
+8. Which one is more flexible: Currying or Partial Application?
+
+---
+
+### Coding Questions
+
+1. Convert a normal function into a curried function.
+2. Implement your own `curry()`.
+3. Create a reusable tax calculator using partial application.
+4. Create a curried logger.
+
+---
+
+# Function Composition
+
+## Conceptual Questions
+
+### Easy
+
+1. What is Function Composition?
+2. Why do we use Function Composition?
+3. Difference between Composition and Higher-Order Functions?
+4. Difference between `compose()` and `pipe()`?
+5. Why does `compose()` execute from right to left?
+
+---
+
+### Intermediate
+
+6. Explain why `reduceRight()` is used.
+7. What happens if we use `reduce()` instead?
+8. Explain the following pipeline.
+
+```js
+compose(formatPrice,addTax,applyDiscount)
+```
+
+9. Why is composition preferred over one large function?
+
+---
+
+### Coding Questions
+
+1. Implement your own `compose()`.
+2. Implement your own `pipe()`.
+3. Compose three string utility functions.
+4. Compose an image-processing pipeline.
+5. Create a reusable data transformation pipeline.
+
+---
+
+# Mixed Interview Questions (Frequently Asked)
+
+These are the kinds of questions commonly asked in technical interviews because they test multiple concepts together.
+
+1. Explain the difference between Scope, Lexical Scope, and Closures.
+2. Explain the difference between Closures and `this`.
+3. Explain the difference between `call()`, `apply()`, and `bind()`.
+4. Explain the difference between Normal Functions and Arrow Functions.
+5. Explain the difference between Currying and Partial Application.
+6. Explain the difference between Composition and Higher-Order Functions.
+7. Why are functions called "First-Class Citizens" in JavaScript?
+8. What are callbacks? How are they related to Higher-Order Functions?
+9. Explain the execution flow of the following code step by step.
+10. Predict the output without running the code.
+11. Identify whether a function is pure or impure and explain why.
+12. Refactor a large function using composition and Higher-Order Functions.
+13. Design a private state manager using closures.
+14. Implement `compose()`, `pipe()`, `bind()`, and `curry()` from scratch.
+15. Explain how React internally benefits from closures, Higher-Order Functions, function composition, and lexical `this`.
+
+---
+
+# Module 3 Challenge Problems (Real Interview Level)
+
+1. Build a `compose()` utility from scratch that accepts any number of functions.
+2. Build a `pipe()` utility similar to Lodash.
+3. Implement a custom version of `Function.prototype.bind`.
+4. Implement a generic memoization function using closures.
+5. Create a private cache using closures.
+6. Build a reusable event logger using Higher-Order Functions.
+7. Implement currying for any function with `n` arguments.
+8. Refactor an object-oriented solution into a functional composition pipeline.
+9. Explain the `this` value for every function call in a given code snippet.
+10. Given a complex JavaScript program, identify all closures, scope chains, higher-order functions, pure functions, side effects, and function compositions.
+
+These questions cover nearly all interview expectations for these Module 3 topics, from beginner fundamentals to advanced JavaScript interview scenarios.

@@ -1,0 +1,1088 @@
+---
+title: Interview Practice Solutions
+description: Full solutions to Module 3 Interview Practice Questions
+icon: BookOpenCheck
+---
+
+<Callout type="info">
+This is the solution file for the Module 3 Interview Practice Questions. Every answer is written the way you'd actually explain it out loud in an interview — plain words first, then a short example to back it up.
+</Callout>
+
+---
+
+# 1. Lexical Scoping Chains
+
+## Conceptual Questions
+
+### Easy
+
+**1. What is lexical scope?**
+Lexical scope means a variable's "home" is decided by *where it is written in the code*, not by who calls the function. JavaScript looks at the code structure at write-time to figure out what a function is allowed to see.
+
+**2. Scope vs lexical scope — what's the difference?**
+"Scope" is the general idea of where a variable is accessible. "Lexical scope" is the specific rule JavaScript uses to decide that: based on physical nesting in the source code, not on how or where the function is called.
+
+**3. How does JavaScript find where a variable lives?**
+It looks at the current function first. If the variable isn't there, it walks outward to the function that contains it, then the one containing that, and so on, until it reaches the global scope.
+
+**4. What is a scope chain?**
+It's the ordered list of scopes JavaScript checks when looking for a variable — starting from the innermost function and going outward, link by link, like a chain, until it finds the variable or runs out of scopes.
+
+**5. What happens if the variable isn't found anywhere in the chain?**
+JavaScript throws a `ReferenceError: x is not defined`.
+
+**6. Can an inner function access a parent's variables?**
+Yes. Because of lexical scoping, an inner function is created inside the parent's scope, so it automatically has access to everything the parent can see.
+
+**7. Can a parent access a variable declared inside a child function?**
+No. Scope only opens outward-to-inward when searching, never inward-to-outward. The parent doesn't know the child's internal variables exist.
+
+**8. What is Global Scope?**
+Variables declared outside of any function or block. They're accessible from anywhere in the file.
+
+**9. What is Function Scope?**
+Variables declared with `var` inside a function. They're only visible inside that function, regardless of blocks (`if`, `for`, etc.) inside it.
+
+**10. What is Block Scope?**
+Variables declared with `let` or `const` inside `{ }` (an `if`, `for`, or standalone block). They only exist inside that specific block.
+
+---
+
+### Intermediate
+
+**11. Explain how the scope chain search works, step by step.**
+When you reference a variable, JS checks the current function's scope first. Not found? It moves to the scope that lexically contains it. This repeats until it hits global scope. If it's still not found, you get a `ReferenceError`.
+
+**12. Why is lexical scope decided at write-time, not run-time?**
+Because JavaScript builds the scope structure by reading the source code itself (where functions are nested) before it ever runs. So no matter when or where a function is *called*, its scope is fixed by where it was *written*.
+
+**13. What is variable shadowing?**
+When a variable declared in an inner scope has the same name as one in an outer scope. The inner one "shadows" (hides) the outer one within that inner scope.
+
+**14. Shadowing vs reassignment?**
+Reassignment changes the value of the *same* variable. Shadowing creates a *brand-new, separate* variable in an inner scope that just happens to share a name with an outer one — the outer variable is untouched.
+
+**15. Predict the output:**
+```js
+let x = 10;
+function outer() {
+  let x = 20;
+  function inner() {
+    console.log(x);
+  }
+  inner();
+}
+outer();
+```
+**Output: `20`**. `inner()` looks up the scope chain and finds `x = 20` in `outer()` first — it never needs to reach the global `x = 10`.
+
+**16. Predict the output:**
+```js
+let name = "Ali";
+function one() {
+  function two() {
+    console.log(name);
+  }
+  two();
+}
+one();
+```
+**Output: `"Ali"`**. Neither `one` nor `two` declares its own `name`, so the search keeps going outward until it hits the global `name`.
+
+**17. Predict the output:**
+```js
+function one(){
+  let a = 10;
+  function two(){
+    let b = 20;
+  }
+  console.log(b);
+}
+one();
+```
+**Output: `ReferenceError: b is not defined`**. `b` only exists inside `two()`. `one()` can't reach *into* `two()` — scope only searches outward, never inward.
+
+**18. What is a lexical environment?**
+It's the internal structure JS creates for every scope — basically a record that stores all the variables/functions declared there, plus a reference to its parent's lexical environment (used for the scope chain).
+
+**19. Relationship between Execution Context and Lexical Environment?**
+Every time a function runs, JS creates an Execution Context for it. That Execution Context *contains* a Lexical Environment, which is the actual data structure holding the variables and the link to the outer scope.
+
+**20. Why doesn't JS search child scopes?**
+Because a parent function is defined *before* its children even exist (in terms of execution), and lexical scope is about "what does the code around me look like" — a parent's surrounding code never includes what's inside a child.
+
+---
+
+## Coding Questions
+
+**1. Demonstrate lexical scope:**
+```js
+function outer() {
+  let msg = "Hello from outer";
+  function inner() {
+    console.log(msg); // inner can see outer's variable
+  }
+  inner();
+}
+outer(); // "Hello from outer"
+```
+
+**2. Demonstrate variable shadowing:**
+```js
+let color = "red";
+function paint() {
+  let color = "blue"; // shadows the outer "red"
+  console.log(color); // "blue"
+}
+paint();
+console.log(color); // "red" — untouched
+```
+
+**3. Three nested functions printing an outer variable:**
+```js
+function a() {
+  let secret = "found me";
+  function b() {
+    function c() {
+      console.log(secret); // "found me"
+    }
+    c();
+  }
+  b();
+}
+a();
+```
+
+**4. Explain every scope in this code:**
+```js
+let g = "global";
+function outer() {
+  let o = "outer";
+  function inner() {
+    let i = "inner";
+    console.log(g, o, i);
+  }
+  inner();
+}
+outer();
+```
+- `g` lives in **Global Scope** — visible everywhere.
+- `o` lives in **outer's Function Scope** — visible in `outer` and anything nested inside it (`inner`).
+- `i` lives in **inner's Function Scope** — only visible inside `inner`.
+- When `console.log` runs inside `inner`, it can see all three because the scope chain is `inner → outer → global`.
+
+---
+
+# 2. Closures Deep Dive
+
+## Conceptual Questions
+
+### Easy
+
+**1. What is a closure?**
+A closure is a function that "remembers" the variables from the scope it was created in, even after that outer scope has finished running.
+
+**2. Why do closures exist?**
+They're a natural side effect of lexical scoping + functions being first-class values. JS needs a way to keep a function's outer variables alive if the function might still run later (e.g., returned or passed elsewhere) — that mechanism is the closure.
+
+**3. What does a closure remember?**
+It remembers references to the actual variables (not just snapshot copies of their values) from its lexical (creation) scope.
+
+**4. When is a closure created?**
+Every time a function is created, it forms a closure over its surrounding lexical scope — even if that closure isn't "useful" until the outer function returns and the inner one is used elsewhere.
+
+**5. Is every nested function a closure?**
+Technically yes — every nested function closes over its outer scope. But we usually only *call* something "a closure" in practice when the outer function has finished executing and the inner function is still using those outer variables.
+
+---
+
+### Intermediate
+
+**6. Why does this work?**
+```js
+function outer(){
+  let count = 0;
+  return function(){
+    count++;
+    console.log(count);
+  }
+}
+const counter = outer();
+counter(); // 1
+counter(); // 2
+```
+`outer()` runs once and returns an inner function. Normally `count` would be destroyed once `outer` finishes. But because the returned function forms a closure over `count`, JS keeps `count` alive in memory. Each call to `counter()` updates that same remembered `count`.
+
+**7. Why isn't `count` destroyed after `outer()` finishes?**
+Because the inner function still holds a live reference to it. JS's garbage collector only removes variables that nothing can reach anymore — since the closure can still reach `count`, it's kept alive.
+
+**8. Closures and lexical scope — what's the connection?**
+Closures are *built on* lexical scope. Lexical scope defines which variables a function can see; a closure is what happens when that function keeps access to those variables even after the outer function is gone.
+
+**9. How does JS store closed-over variables?**
+Instead of destroying the outer function's variable environment after it returns, JS keeps that specific environment in memory as long as some inner function still references it.
+
+**10. What is the "Closure Scope"?**
+It's the outer function's scope that got preserved and attached to the inner function, letting the inner function keep reading/writing those variables later.
+
+---
+
+### Advanced
+
+**11. What memory problems can closures cause?**
+Since closures keep variables alive that would otherwise be garbage-collected, holding onto closures you no longer need (e.g., in long-lived event listeners or caches) can keep large objects in memory unnecessarily.
+
+**12. How can closures cause memory leaks specifically?**
+Example: attaching a closure to a DOM element's event listener that references a big object, and never removing that listener — the object never gets freed even after the DOM element is removed, because the closure still "holds" it.
+
+**13. Why are closures heavily used in React?**
+Hooks like `useState` and `useEffect` rely on closures to "remember" values between renders and to capture the specific props/state from the render they were created in.
+
+**14. Explain closures using Execution Context.**
+When `outer()` runs, its Execution Context (with its Lexical Environment) is created. Normally that context is popped off the call stack and discarded when `outer()` returns. But if an inner function was returned/exported, JS keeps that Lexical Environment alive in memory instead of discarding it, because the inner function still references it.
+
+**15. Can closures remember objects, not just primitives?**
+Yes — closures capture the actual variable reference, so if the variable holds an object or array, the closure has access to that same object and can read or mutate it.
+
+---
+
+## Coding Questions
+
+**1. Counter using closures:**
+```js
+function createCounter() {
+  let count = 0;
+  return () => ++count;
+}
+const counter = createCounter();
+console.log(counter()); // 1
+console.log(counter()); // 2
+```
+
+**2. Private bank account:**
+```js
+function createAccount(balance) {
+  return {
+    deposit: (amt) => (balance += amt),
+    withdraw: (amt) => (balance -= amt),
+    getBalance: () => balance
+  };
+}
+const acc = createAccount(100);
+acc.deposit(50);
+console.log(acc.getBalance()); // 150
+```
+
+**3. Private password manager:**
+```js
+function createVault(password) {
+  return {
+    checkPassword: (attempt) => attempt === password
+  };
+}
+const vault = createVault("secret123");
+console.log(vault.checkPassword("wrong")); // false
+```
+
+**4. Function that remembers previous values:**
+```js
+function historyTracker() {
+  let history = [];
+  return (value) => {
+    history.push(value);
+    return [...history];
+  };
+}
+const track = historyTracker();
+console.log(track(1)); // [1]
+console.log(track(2)); // [1, 2]
+```
+
+**5. Function factory using closures:**
+```js
+function multiplierFactory(factor) {
+  return (num) => num * factor;
+}
+const double = multiplierFactory(2);
+console.log(double(5)); // 10
+```
+
+---
+
+## Practical Questions
+
+**1. Why are closures used in event listeners?**
+So the listener's callback can remember and use data (like an item's ID) from the scope where the listener was set up, even though the callback fires later, asynchronously.
+
+**2. Why are closures used in `setTimeout()`?**
+The callback runs later, after the surrounding function has finished. A closure lets it still access variables from that surrounding function at the time it eventually runs.
+
+**3. Why do React Hooks depend on closures?**
+Hooks capture the specific state/props values from the render in which they were defined, using closures — this is why "stale closures" are a common React bug when dependencies are set up incorrectly.
+
+---
+
+# Persisting State Safely & Data Privacy
+
+## Conceptual Questions
+
+**1. Why do we need data privacy in JS?**
+To stop external code from directly changing internal state in unpredictable ways, which keeps data consistent and prevents bugs caused by uncontrolled mutation.
+
+**2. How do closures help create private variables?**
+A variable declared inside a function is only reachable through functions returned from that same scope — outside code has no direct path to it, so it behaves like a private field.
+
+**3. Why can't outside code touch private variables?**
+Because they live inside a function's local scope, and the scope chain doesn't allow "reaching in" from outside — only the functions defined in that same scope can access them.
+
+**4. What is encapsulation?**
+Bundling data together with the functions that are allowed to operate on it, while hiding the data itself from direct outside access.
+
+**5. Explain the Module Pattern.**
+A design pattern where a function (often an IIFE) returns an object exposing only specific methods, while keeping internal variables private via closure — giving you a public API and hidden internal state.
+
+## Coding Questions
+
+**1. Private counter:**
+```js
+function Counter() {
+  let count = 0;
+  return { increment: () => ++count, value: () => count };
+}
+```
+
+**2. Private shopping cart:**
+```js
+function ShoppingCart() {
+  let items = [];
+  return {
+    add: (item) => items.push(item),
+    getItems: () => [...items]
+  };
+}
+```
+
+**3. Login system with private password:**
+```js
+function LoginSystem(password) {
+  let attempts = 0;
+  return {
+    login: (input) => {
+      attempts++;
+      return input === password;
+    },
+    getAttempts: () => attempts
+  };
+}
+```
+
+**4. Bank account using closures:**
+```js
+function BankAccount(initial) {
+  let balance = initial;
+  return {
+    deposit: (amt) => (balance += amt),
+    withdraw: (amt) => (balance -= amt),
+    balance: () => balance
+  };
+}
+```
+
+---
+
+# 3. The `this` Keyword
+
+## Conceptual Questions
+
+### Easy
+
+**1. What is `this`?**
+`this` refers to the object that is currently "calling" or "owning" the executing function. Its value depends on *how* a function is invoked, not where it's written.
+
+**2. Is `this` decided at write-time or call-time?**
+Call-time (except for arrow functions, which use `this` from their lexical/write-time surroundings).
+
+**3. What determines the value of `this`?**
+The way the function was called — as a plain function, as a method, with `new`, or with `call`/`apply`/`bind`.
+
+**4. What are the four binding rules?**
+Default binding, implicit binding, explicit binding, and `new` binding.
+
+**5. What is default binding?**
+When a function is called plainly (`fn()`, no owning object), `this` is `undefined` in strict mode or the global object in non-strict mode.
+
+**6. What is implicit binding?**
+When a function is called as a method of an object (`obj.fn()`), `this` becomes that object.
+
+**7. What is explicit binding?**
+Manually setting `this` using `.call()`, `.apply()`, or `.bind()`.
+
+**8. What is `new` binding?**
+When a function is called with `new`, JS creates a brand-new object and sets `this` to that new object inside the function.
+
+---
+
+### Intermediate
+
+**9. Predict the output:**
+```js
+function show(){
+  console.log(this);
+}
+show();
+```
+In strict mode: **`undefined`**. In non-strict mode (e.g., plain script in a browser): the global object (`window`). This is default binding — there's no owning object.
+
+**10. Predict the output:**
+```js
+const user = {
+  name: "Ali",
+  greet(){ console.log(this.name); }
+};
+user.greet();
+```
+**Output: `"Ali"`**. `greet` is called as `user.greet()`, so implicit binding sets `this` to `user`.
+
+**11. Why does `greet.call(user)` work?**
+`.call()` explicitly sets what `this` should be inside `greet`, overriding whatever binding would normally apply — here it forces `this` to be `user`.
+
+**12. Why does `bind()` exist?**
+To permanently lock a function's `this` value, returning a new function that always uses that fixed `this`, no matter how it's later called (e.g., passed as a callback).
+
+**13. Why does `apply()` exist?**
+Same purpose as `call()` — invoking a function with a specific `this` — but it takes arguments as an array instead of a comma-separated list, useful when arguments come from an array.
+
+**14. Why don't arrow functions have their own `this`?**
+Arrow functions don't create their own `this` binding at all. They simply use `this` from the enclosing lexical scope — the scope where they were written.
+
+**15. Why does `this` become `undefined` inside plain callbacks?**
+When a method is passed as a plain reference (e.g., to `setTimeout`), it loses its connection to the object it came from. It's then called as a bare function, so default binding kicks in.
+
+---
+
+### Advanced
+
+**16. Explain what `new` does internally.**
+1. Creates a brand-new empty object.
+2. Sets that object's prototype to the constructor function's `.prototype`.
+3. Runs the constructor function with `this` bound to the new object.
+4. Returns the new object (unless the constructor explicitly returns a different object).
+
+**17. Which binding rule has the highest priority?**
+`new` binding beats explicit binding, which beats implicit binding, which beats default binding.
+
+**18. Can `bind()` override `new`?**
+No — if you `new` a bound function, `new` binding still wins (this is intentionally handled by JS's internal `[[Construct]]` mechanism).
+
+**19. Explain lexical `this`.**
+It means `this` is resolved by looking at the surrounding code where the function was *defined*, not by how it's called — this is exactly how arrow functions behave.
+
+**20. Difference between closures and `this`?**
+Closures are about remembering *variables* from a lexical scope. `this` is a completely separate mechanism tied to *how a function is called*, not to lexical scope (except in arrow functions, which borrow lexical `this` from their surroundings).
+
+---
+
+## Coding Questions
+
+**1. Fix the bug:**
+```js
+const user = {
+  name: "Ali",
+  greet(){ console.log(this.name); }
+};
+setTimeout(user.greet, 1000); // logs undefined — loses `this`
+
+// Fix:
+setTimeout(user.greet.bind(user), 1000); // "Ali"
+// or
+setTimeout(() => user.greet(), 1000); // "Ali"
+```
+
+**2. Implement your own `bind()`:**
+```js
+Function.prototype.myBind = function(context, ...boundArgs) {
+  const fn = this;
+  return function(...args) {
+    return fn.apply(context, [...boundArgs, ...args]);
+  };
+};
+```
+
+**3. Predict the output:**
+```js
+const obj = {
+  name: "Ali",
+  show(){
+    return function(){ console.log(this.name); }
+  }
+};
+obj.show()();
+```
+**Output: `undefined`**. The returned inner function is called plainly (`()()`), not as `obj`'s method, so default binding applies — `this` isn't `obj`.
+
+**4. Explain the output:**
+```js
+const obj = {
+  name: "Ali",
+  show(){
+    return () => { console.log(this.name); }
+  }
+};
+obj.show()();
+```
+**Output: `"Ali"`**. The returned function is an arrow function, so it uses `this` from where it was *defined* — inside `show()`, where `this` was `obj`. It keeps that `this` no matter how it's later called.
+
+---
+
+# 4. Explicit Binding (`.call()`, `.apply()`, `.bind()`)
+
+## Conceptual Questions
+
+### Easy
+
+**1. Why do these methods exist?**
+To let you manually control what `this` refers to inside a function, instead of relying on how the function happens to be called.
+
+**2. What problem do they solve?**
+They solve the problem of functions losing their intended `this` — for example, when borrowing a method from one object to use on another, or passing a method as a callback.
+
+**3. Difference between `call` and `apply`?**
+Both invoke the function immediately with a chosen `this`. `call` takes arguments individually (`fn.call(obj, a, b)`); `apply` takes them as an array (`fn.apply(obj, [a, b])`).
+
+**4. Difference between `call` and `bind`?**
+`call` invokes the function right away. `bind` doesn't invoke it — it returns a *new function* with `this` permanently set, which you can call later.
+
+**5. Which one returns a new function instead of running immediately?**
+`bind()`.
+
+---
+
+### Intermediate
+
+**6. When should you use `apply()`?**
+When your arguments are already in an array, or you don't know the number of arguments ahead of time (e.g., `Math.max.apply(null, arrayOfNumbers)`).
+
+**7. When should you use `bind()`?**
+When you need to pass a function somewhere else (like an event listener or callback) but want to guarantee it keeps a specific `this` when it's eventually called.
+
+**8. Why is `bind()` useful in event listeners?**
+Event listener callbacks are called by the browser, not by your object, so they lose their original `this`. `bind()` locks in the correct `this` beforehand.
+
+**9. What is Function Borrowing?**
+Using `.call()` or `.apply()` to let one object use a method that actually belongs to a different object, without copying the method.
+
+**10. What is Method Borrowing?**
+Essentially the same idea as function borrowing — "borrowing" a method defined on one object/prototype (like array methods) to use on a different object (like an array-like `arguments` object).
+
+---
+
+## Coding Questions
+
+**1. Borrow a method for another object:**
+```js
+const person1 = { name: "Ali", greet(){ console.log(`Hi, I'm ${this.name}`); } };
+const person2 = { name: "Sara" };
+person1.greet.call(person2); // "Hi, I'm Sara"
+```
+
+**2. Rewrite a callback using `bind()`:**
+```js
+const obj = { value: 42, show(){ console.log(this.value); } };
+setTimeout(obj.show.bind(obj), 1000); // 42
+```
+
+**3. Implement your own `call()`:**
+```js
+Function.prototype.myCall = function(context = {}, ...args) {
+  context.fn = this;
+  const result = context.fn(...args);
+  delete context.fn;
+  return result;
+};
+```
+
+**4. Implement your own `apply()`:**
+```js
+Function.prototype.myApply = function(context = {}, argsArray = []) {
+  context.fn = this;
+  const result = context.fn(...argsArray);
+  delete context.fn;
+  return result;
+};
+```
+
+**5. Implement your own `bind()`:**
+```js
+Function.prototype.myBind = function(context, ...boundArgs) {
+  const fn = this;
+  return function(...args) {
+    return fn.apply(context, [...boundArgs, ...args]);
+  };
+};
+```
+
+---
+
+# 5. Advanced Functional Patterns
+
+## Higher-Order Functions (HOFs)
+
+### Conceptual — Easy
+
+**1. What is a Higher-Order Function?**
+A function that either takes another function as an argument, returns a function, or both.
+
+**2. Why are HOFs useful?**
+They let you reuse general logic (like "loop over this array") while plugging in different specific behavior (like "double each number" or "filter evens") without rewriting the loop each time.
+
+**3. Five built-in HOFs.**
+`map()`, `filter()`, `reduce()`, `forEach()`, `sort()`.
+
+**4. Is `map()` a HOF?**
+Yes — it takes a callback function as an argument.
+
+**5. Is `filter()` a HOF?**
+Yes — same reason, it takes a callback that decides which items to keep.
+
+---
+
+### Intermediate
+
+**6. Callback vs Higher-Order Function?**
+A callback is *the function passed in*. A Higher-Order Function is *the function that accepts (or returns) it*. `map()` is the HOF; the function you pass into `map()` is the callback.
+
+**7. Can a HOF return another function?**
+Yes — that's exactly what function factories and currying rely on.
+
+**8. Relationship between HOFs and callbacks?**
+HOFs are the mechanism that makes callbacks possible — a HOF's whole purpose is to accept a callback and call it at the right time with the right data.
+
+**9. How do HOFs support the DRY principle?**
+They let you write the repetitive part (like looping) once, and change only the small piece of logic (the callback) each time you need something slightly different — avoiding repeated, near-identical loops.
+
+**10. Predict the output:**
+```js
+function operation(a, b, fn){
+  return fn(a, b);
+}
+```
+This alone doesn't log anything — `operation` just returns whatever `fn(a, b)` returns. For example, `operation(2, 3, (a,b) => a + b)` would return `5`.
+
+---
+
+## Coding Questions
+
+**1. Your own `map()`:**
+```js
+Array.prototype.myMap = function(callback) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    result.push(callback(this[i], i, this));
+  }
+  return result;
+};
+```
+
+**2. Your own `filter()`:**
+```js
+Array.prototype.myFilter = function(callback) {
+  const result = [];
+  for (let i = 0; i < this.length; i++) {
+    if (callback(this[i], i, this)) result.push(this[i]);
+  }
+  return result;
+};
+```
+
+**3. Your own `reduce()`:**
+```js
+Array.prototype.myReduce = function(callback, initialValue) {
+  let acc = initialValue;
+  let startIndex = 0;
+  if (acc === undefined) {
+    acc = this[0];
+    startIndex = 1;
+  }
+  for (let i = startIndex; i < this.length; i++) {
+    acc = callback(acc, this[i], i, this);
+  }
+  return acc;
+};
+```
+
+**4. Reusable logger using HOFs:**
+```js
+function withLogging(fn) {
+  return (...args) => {
+    console.log(`Calling with args: ${args}`);
+    return fn(...args);
+  };
+}
+```
+
+**5. Authentication wrapper:**
+```js
+function withAuth(fn) {
+  return (user, ...args) => {
+    if (!user.loggedIn) throw new Error("Not authenticated");
+    return fn(...args);
+  };
+}
+```
+
+---
+
+## Pure Functions & Side Effects
+
+### Conceptual — Easy
+
+**1. What is a Pure Function?**
+A function that always returns the same output for the same input and doesn't change anything outside itself.
+
+**2. What is a Side Effect?**
+Any change a function makes outside its own scope — like modifying a global variable, changing an argument object, logging, or making a network call.
+
+**3. Why are Pure Functions predictable?**
+Because their output depends only on their inputs — no hidden state can change the result, so you can reason about them in isolation.
+
+**4. Why are Side Effects dangerous?**
+They make behavior depend on things outside the function, which makes bugs harder to trace and functions harder to test or reuse safely.
+
+---
+
+### Intermediate
+
+**5. Is this pure?**
+```js
+function add(a, b){ return a + b; }
+```
+**Yes.** Same inputs always give the same output, and nothing outside is touched.
+
+**6. Is this pure?**
+```js
+let total = 0;
+function add(x){ total += x; }
+```
+**No.** It mutates `total`, a variable outside the function's own scope — that's a side effect, and it doesn't return a value based purely on input.
+
+**7. Five common side effects.**
+Modifying a global variable, mutating a function argument, making an API call, writing to a file/console, changing the DOM.
+
+**8. Why must React reducers be pure?**
+So React can predictably re-run them, compare old vs. new state, and safely handle things like time-travel debugging or double-invocation in Strict Mode — none of which work reliably if a reducer has side effects.
+
+---
+
+## Coding Questions
+
+**1. Convert impure to pure:**
+```js
+// Impure
+let total = 0;
+function addImpure(x){ total += x; }
+
+// Pure
+function addPure(total, x){ return total + x; }
+```
+
+**2. Remove side effects:**
+```js
+// Before
+function logAndDouble(x){
+  console.log(x);
+  return x * 2;
+}
+// After — remove the logging side effect
+function double(x){ return x * 2; }
+```
+
+**3. Avoid mutating objects:**
+```js
+// Before (mutates)
+function addProperty(obj){
+  obj.updated = true;
+  return obj;
+}
+// After (returns a new object)
+function addPropertyPure(obj){
+  return { ...obj, updated: true };
+}
+```
+
+---
+
+## Currying & Partial Application
+
+### Conceptual — Easy
+
+**1. What is currying?**
+Turning a function that takes multiple arguments into a chain of functions that each take one argument at a time.
+
+**2. What is partial application?**
+Pre-filling *some* of a function's arguments now, and getting back a new function that only needs the rest of the arguments later.
+
+**3. Difference between currying and partial application?**
+Currying always breaks a function down into a strict chain of single-argument calls. Partial application just fixes some arguments upfront — you can still pass several remaining arguments at once.
+
+**4. Why do we use currying?**
+It lets you create specialized, reusable versions of a general function, and makes composing functions together cleaner.
+
+**5. Why does currying rely on closures?**
+Each returned function needs to "remember" the arguments already given — that memory is exactly what a closure provides.
+
+---
+
+### Intermediate
+
+**6. Explain `add(2)(3)(4)`.**
+`add(2)` returns a function remembering `2`. Calling it with `(3)` returns another function remembering `2` and `3`. Calling that with `(4)` finally has all three arguments and computes the result — each step is a closure holding onto previous arguments.
+
+**7. Why is `multiply.bind(null, 2)` partial application?**
+`bind` here pre-fills the first argument (`2`) of `multiply` and returns a new function that only needs the remaining argument(s) — that's exactly what partial application means.
+
+**8. Which is more flexible: currying or partial application?**
+Partial application is more flexible in *how many* arguments you supply at once; currying is more rigid but composes more predictably one argument at a time.
+
+---
+
+## Coding Questions
+
+**1. Convert a normal function into a curried one:**
+```js
+function add(a, b, c){ return a + b + c; }
+const curriedAdd = a => b => c => a + b + c;
+```
+
+**2. Your own `curry()`:**
+```js
+function curry(fn) {
+  return function curried(...args) {
+    if (args.length >= fn.length) return fn(...args);
+    return (...next) => curried(...args, ...next);
+  };
+}
+```
+
+**3. Reusable tax calculator using partial application:**
+```js
+function calculateTax(rate, amount){ return amount + amount * rate; }
+const applyStateTax = calculateTax.bind(null, 0.08);
+console.log(applyStateTax(100)); // 108
+```
+
+**4. Curried logger:**
+```js
+const log = level => message => console.log(`[${level}] ${message}`);
+const logError = log("ERROR");
+logError("Something broke");
+```
+
+---
+
+## Function Composition
+
+### Conceptual — Easy
+
+**1. What is Function Composition?**
+Combining several small functions into one, where the output of one becomes the input of the next.
+
+**2. Why do we use it?**
+It breaks complex logic into small, reusable, testable pieces, then chains them together instead of writing one giant function.
+
+**3. Composition vs Higher-Order Functions?**
+A HOF is any function taking/returning functions. Composition is a *specific use* of that idea — chaining functions together so data flows through them in sequence.
+
+**4. `compose()` vs `pipe()`?**
+Both chain functions together. `compose()` runs them right-to-left; `pipe()` runs them left-to-right (usually considered more readable, matching reading order).
+
+**5. Why does `compose()` go right to left?**
+By convention, it mirrors how nested function calls read mathematically — `f(g(x))` means "run `g` first, then `f`," which is right-to-left.
+
+---
+
+### Intermediate
+
+**6. Why use `reduceRight()`?**
+It processes the array of functions starting from the end, which naturally produces right-to-left execution order for `compose()`.
+
+**7. What if you used `reduce()` instead?**
+You'd get left-to-right execution — which is actually how `pipe()` is implemented, not `compose()`.
+
+**8. Explain `compose(formatPrice, addTax, applyDiscount)`.**
+Execution order is right to left: first `applyDiscount` runs on the input, then its result goes into `addTax`, and finally that result goes into `formatPrice` for the final output.
+
+**9. Why prefer composition over one large function?**
+Small functions are easier to test, reuse, and reason about individually — a single giant function mixes multiple responsibilities together, which is harder to debug or change safely.
+
+---
+
+## Coding Questions
+
+**1. Your own `compose()`:**
+```js
+const compose = (...fns) => (input) =>
+  fns.reduceRight((acc, fn) => fn(acc), input);
+```
+
+**2. Your own `pipe()`:**
+```js
+const pipe = (...fns) => (input) =>
+  fns.reduce((acc, fn) => fn(acc), input);
+```
+
+**3. Compose three string utilities:**
+```js
+const trim = str => str.trim();
+const toLower = str => str.toLowerCase();
+const exclaim = str => str + "!";
+const format = pipe(trim, toLower, exclaim);
+console.log(format("  HELLO  ")); // "hello!"
+```
+
+**4. Image-processing pipeline (conceptual example):**
+```js
+const resize = img => ({ ...img, size: "resized" });
+const grayscale = img => ({ ...img, color: "gray" });
+const compress = img => ({ ...img, size: img.size + "-compressed" });
+const processImage = pipe(resize, grayscale, compress);
+```
+
+**5. Reusable data transformation pipeline:**
+```js
+const removeNulls = arr => arr.filter(Boolean);
+const toUpperCaseAll = arr => arr.map(s => s.toUpperCase());
+const sortAlpha = arr => [...arr].sort();
+const transform = pipe(removeNulls, toUpperCaseAll, sortAlpha);
+console.log(transform(["b", null, "a"])); // ["A", "B"]
+```
+
+---
+
+# Mixed Interview Questions (Frequently Asked)
+
+**1. Scope vs Lexical Scope vs Closures — what's the difference?**
+Scope is the general concept of where a variable is visible. Lexical scope is *how* JS decides that — based on where code is physically written. A closure is what happens when a function keeps access to its lexical scope's variables even after the outer function has already finished running.
+
+**2. Closures vs `this` — what's the difference?**
+Closures are about remembering *variables* from a function's creation scope. `this` is about which *object* is calling the function right now, decided at call-time (except in arrow functions, which use the closure's lexical `this`).
+
+**3. `call()` vs `apply()` vs `bind()`?**
+All three let you set `this` manually. `call` invokes immediately with individual arguments; `apply` invokes immediately with an array of arguments; `bind` doesn't invoke immediately — it returns a new function with `this` locked in for later.
+
+**4. Normal Functions vs Arrow Functions?**
+Normal functions get their own `this` determined by how they're called, and have their own `arguments` object. Arrow functions have no `this` of their own (they use the enclosing scope's `this`) and no `arguments` object.
+
+**5. Currying vs Partial Application?**
+Currying breaks a function into a strict chain of one-argument calls. Partial application just pre-fills some arguments now and leaves the rest for later, without requiring a strict one-at-a-time chain.
+
+**6. Composition vs Higher-Order Functions?**
+HOF is the broader concept (any function taking or returning functions). Composition is a specific pattern built using that concept — chaining several functions so one's output feeds the next's input.
+
+**7. Why are functions "First-Class Citizens" in JS?**
+Because functions can be stored in variables, passed as arguments, returned from other functions, and stored in data structures — treated just like any other value.
+
+**8. What are callbacks, and how do they relate to HOFs?**
+A callback is a function passed into another function to be called later. HOFs are what make this possible — they're the functions designed to accept and invoke those callbacks.
+
+**9–12. Execution flow, output prediction, pure/impure checks, refactors.**
+These are applied versions of the concepts above — walk through: (a) scope chain for variable lookups, (b) `this` binding rules for call-time behavior, (c) whether a function touches anything outside itself to judge purity, and (d) break large functions into small pure pieces chained with `compose`/`pipe`.
+
+**13. Design a private state manager using closures:**
+```js
+function createStore(initialState) {
+  let state = initialState;
+  const listeners = [];
+  return {
+    getState: () => state,
+    setState: (update) => {
+      state = { ...state, ...update };
+      listeners.forEach(fn => fn(state));
+    },
+    subscribe: (fn) => listeners.push(fn)
+  };
+}
+```
+
+**14. Implement `compose()`, `pipe()`, `bind()`, `curry()` — see coding sections above for each.**
+
+**15. How does React benefit from closures, HOFs, composition, and lexical `this`?**
+Hooks use closures to remember state between renders. Higher-order components (and hooks themselves) are HOFs. Composing small components/functions together is exactly function composition. And arrow functions' lexical `this` avoids the classic "`this` is undefined in a callback" bug inside class components.
+
+---
+
+# Module 3 Challenge Problems (Real Interview Level)
+
+**1. `compose()` accepting any number of functions** — see Function Composition coding section above.
+
+**2. `pipe()` similar to Lodash** — see Function Composition coding section above.
+
+**3. Custom `Function.prototype.bind`** — see Explicit Binding coding section above.
+
+**4. Generic memoization using closures:**
+```js
+function memoize(fn) {
+  const cache = new Map();
+  return (...args) => {
+    const key = JSON.stringify(args);
+    if (cache.has(key)) return cache.get(key);
+    const result = fn(...args);
+    cache.set(key, result);
+    return result;
+  };
+}
+```
+
+**5. Private cache using closures:**
+```js
+function createCache() {
+  const store = {};
+  return {
+    set: (key, value) => (store[key] = value),
+    get: (key) => store[key]
+  };
+}
+```
+
+**6. Reusable event logger using HOFs:**
+```js
+function withEventLog(handler) {
+  return (event) => {
+    console.log(`Event fired: ${event.type}`);
+    return handler(event);
+  };
+}
+```
+
+**7. Currying for any function with `n` arguments** — see the `curry()` implementation above; it already works for any arity via `fn.length`.
+
+**8. Refactor OOP into a functional composition pipeline:**
+```js
+// OOP style
+class PriceCalculator {
+  constructor(price) { this.price = price; }
+  applyDiscount(pct) { this.price -= this.price * pct; return this; }
+  addTax(pct) { this.price += this.price * pct; return this; }
+}
+
+// Functional style
+const applyDiscount = pct => price => price - price * pct;
+const addTax = pct => price => price + price * pct;
+const finalPrice = pipe(applyDiscount(0.1), addTax(0.08));
+console.log(finalPrice(100));
+```
+
+**9. Explain `this` for every call in a snippet — walk each call site through the four binding rules** (default, implicit, explicit, `new`), in that priority order, to decide `this` for each one.
+
+**10. Given a complex program, identify closures, scope chains, HOFs, pure functions, side effects, and compositions — practice checklist:**
+- **Scope chain:** trace every variable to where it's declared, outward from the innermost function.
+- **Closures:** look for inner functions returned or passed out that still reference outer variables.
+- **HOFs:** any function taking/returning another function.
+- **Pure vs impure:** does it only use its inputs and only return a value, with zero outside changes?
+- **Side effects:** any mutation, logging, network/API call, or global variable change.
+- **Composition:** any place where one function's output directly feeds into the next.
+
+---
+
+<Callout type="success">
+That covers every question in Module 3 — from lexical scope fundamentals through advanced functional patterns. Re-implementing the coding answers from scratch (without looking) is the best way to make sure they're actually internalized before an interview.
+</Callout>
