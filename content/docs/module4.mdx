@@ -166,6 +166,813 @@ greet({ name: "Sara" }); // "Sara is 18"
 
 ## 3. Keyed Collections — `Map` vs. Plain Objects, `Set`, `WeakMap`/`WeakSet`
 
+## Why were Map and Set introduced?
+
+Before ES6, JavaScript only had **Objects** and **Arrays**.
+
+Developers used Objects like dictionaries.
+
+```javascript
+const user = {};
+
+user.name = "Ali";
+user.age = 22;
+
+console.log(user);
+```
+
+Output
+
+```javascript
+{
+  name: "Ali",
+  age: 22
+}
+```
+
+Seems fine...
+
+But Objects have several problems.
+
+---
+
+## Problem 1 — Keys are only strings or symbols
+
+Consider this.
+
+```javascript
+const obj = {};
+
+obj[1] = "Number";
+obj["1"] = "String";
+
+console.log(obj);
+```
+
+Output
+
+```javascript
+{
+   "1": "String"
+}
+```
+
+Why?
+
+Because object keys are converted into strings.
+
+```javascript
+1
+```
+
+becomes
+
+```javascript
+"1"
+```
+
+So both keys become identical.
+
+---
+
+Suppose you use another object as a key.
+
+```javascript
+const person = {};
+
+const obj = {};
+
+obj[person] = "Developer";
+
+console.log(obj);
+```
+
+Output
+
+```javascript
+{
+   "[object Object]": "Developer"
+}
+```
+
+JavaScript converted
+
+```javascript
+person
+```
+
+into
+
+```javascript
+"[object Object]"
+```
+
+Very dangerous.
+
+---
+
+## Problem 2 — Objects already have built-in properties
+
+```javascript
+const obj = {};
+
+console.log(obj.toString);
+```
+
+Output
+
+```
+function toString()...
+```
+
+Where did this come from?
+
+From
+
+```
+Object.prototype
+```
+
+Every object inherits many properties.
+
+Sometimes they interfere with your data.
+
+---
+
+## Problem 3 — Difficult to know size
+
+```javascript
+const obj = {
+   a:1,
+   b:2,
+   c:3
+};
+```
+
+How many keys?
+
+There is no property like
+
+```javascript
+obj.size
+```
+
+Instead
+
+```javascript
+Object.keys(obj).length
+```
+
+Extra work.
+
+---
+
+## Problem 4 — Iteration isn't straightforward
+
+Need
+
+```javascript
+Object.entries()
+
+Object.keys()
+
+Object.values()
+```
+
+instead of directly iterating.
+
+---
+
+## ES6 Solution
+
+JavaScript introduced
+
+```
+Map
+```
+
+and
+
+```
+Set
+```
+
+---
+
+## Think of Map like a Dictionary
+
+Imagine an English dictionary.
+
+```
+apple → fruit
+
+car → vehicle
+
+sun → star
+```
+
+Every word maps to one meaning.
+
+```
+Key → Value
+```
+
+Exactly what Map does.
+
+---
+
+## Creating a Map
+
+```javascript
+const map = new Map();
+```
+
+Initially
+
+```
+Map(0)
+```
+
+Empty.
+
+---
+
+## Adding data
+
+Instead of
+
+```javascript
+obj.name = "Ali";
+```
+
+Map uses
+
+```javascript
+map.set("name", "Ali");
+```
+
+```javascript
+map.set("age",22);
+```
+
+Now
+
+```
+Map
+```
+
+contains
+
+```
+"name" → "Ali"
+
+"age" → 22
+```
+
+---
+
+## Reading data
+
+Object
+
+```javascript
+obj.name
+```
+
+Map
+
+```javascript
+map.get("name");
+```
+
+Output
+
+```
+Ali
+```
+
+---
+
+## Checking existence
+
+```javascript
+map.has("name");
+```
+
+Output
+
+```
+true
+```
+
+---
+
+## Deleting
+
+```javascript
+map.delete("age");
+```
+
+---
+
+## Clearing everything
+
+```javascript
+map.clear();
+```
+
+---
+
+## Size
+
+Unlike objects
+
+```javascript
+map.size
+```
+
+Output
+
+```
+2
+```
+
+Very simple.
+
+---
+
+## Biggest Advantage
+
+Keys can be ANYTHING.
+
+---
+
+String
+
+```javascript
+map.set("city","Lahore");
+```
+
+---
+
+Number
+
+```javascript
+map.set(1,"One");
+```
+
+---
+
+Boolean
+
+```javascript
+map.set(true,"Yes");
+```
+
+---
+
+Function
+
+```javascript
+function hello(){}
+
+map.set(hello,"Function");
+```
+
+---
+
+Object
+
+```javascript
+const user = {
+    name:"Ali"
+};
+
+map.set(user,"Developer");
+```
+
+No conversion happens.
+
+The actual object becomes the key.
+
+---
+
+Visualize
+
+```
+Map
+
+"user object"
+
+↓
+
+"Developer"
+```
+
+No
+
+```
+"[object Object]"
+```
+
+conversion.
+
+---
+
+## Getting object key
+
+```javascript
+map.get(user);
+```
+
+Output
+
+```
+Developer
+```
+
+Amazing.
+
+---
+
+## Iterating Map
+
+```javascript
+for(const item of map){
+
+    console.log(item);
+
+}
+```
+
+Output
+
+```javascript
+["name","Ali"]
+
+["age",22]
+```
+
+Each item is an array.
+
+---
+
+Destructuring
+
+```javascript
+for(const [key,value] of map){
+
+   console.log(key,value);
+
+}
+```
+
+Output
+
+```
+name Ali
+
+age 22
+```
+
+---
+
+## Internally
+
+Imagine Map like this
+
+```
+Map
+
+Key ---------> Value
+
+"name" ------> "Ali"
+
+22 ----------> "Age"
+
+true --------> "Yes"
+
+{} ----------> "Developer"
+```
+
+Any datatype works.
+
+
+## Real-life Example
+
+Student Roll Number
+
+```
+101 → Ali
+
+102 → Ahmad
+
+103 → Bilal
+```
+
+Exactly a Map.
+
+
+## Now Set
+
+Set is much simpler.
+
+
+Think of a classroom attendance register.
+
+```
+Ali
+
+Ahmad
+
+Bilal
+```
+
+Can Ali appear twice?
+
+No.
+
+Attendance contains unique students.
+
+That is exactly Set.
+
+
+Create
+
+```javascript
+const set = new Set();
+```
+
+
+Add
+
+```javascript
+set.add("Ali");
+
+set.add("Ahmed");
+
+set.add("Ali");
+```
+
+Output
+
+```
+Set
+
+Ali
+
+Ahmed
+```
+
+Only one Ali.
+
+
+## Why?
+
+Set stores
+
+```
+Unique Values
+```
+
+Duplicates are ignored.
+
+
+## Size
+
+```javascript
+set.size
+```
+
+
+Delete
+
+```javascript
+set.delete("Ali");
+```
+
+
+Check
+
+```javascript
+set.has("Ali");
+```
+
+
+Clear
+
+```javascript
+set.clear();
+```
+
+
+## Real-life Example
+
+Guest List
+
+```
+Ali
+
+Ahmed
+
+Ali
+
+Ali
+
+Bilal
+```
+
+Organizer keeps only
+
+```
+Ali
+
+Ahmed
+
+Bilal
+```
+
+Duplicates removed.
+
+
+## Convert Array into Set
+
+```javascript
+const arr = [1,2,2,3,3,3,4];
+
+const set = new Set(arr);
+
+console.log(set);
+```
+
+Output
+
+```
+Set(4)
+
+1
+
+2
+
+3
+
+4
+```
+
+
+Back to Array
+
+```javascript
+const unique = [...set];
+```
+
+Output
+
+```javascript
+[1,2,3,4]
+```
+
+Most common interview trick.
+
+
+## Difference Between Object, Map, and Set
+
+| Feature        | Object                                | Map          | Set                 |
+| -------------- | ------------------------------------- | ------------ | ------------------- |
+| Stores         | Key → Value                           | Key → Value  | Values only         |
+| Duplicate Keys | No                                    | No           | No duplicate values |
+| Key Types      | String/Symbol                         | Any datatype | N/A                 |
+| Ordered        | Mostly insertion order (with nuances) | Yes          | Yes                 |
+| Size           | `Object.keys().length`                | `size`       | `size`              |
+| Iterable       | Not directly                          | Yes          | Yes                 |
+
+
+## Now, what are WeakMap and WeakSet?
+
+To understand them, you first need to understand one important JavaScript concept: **Garbage Collection (GC)**.
+
+Garbage collection is the process by which JavaScript automatically removes objects from memory when **nothing in your program can reach them anymore**.
+
+For example:
+
+```javascript
+let user = { name: "Ali" };
+
+user = null;
+```
+
+The object `{ name: "Ali" }` has no remaining references, so the JavaScript engine is free to remove it from memory.
+
+This concept of **references** is the key to understanding WeakMap and WeakSet.
+
+
+## Why do WeakMap and WeakSet exist?
+
+Sometimes you want to associate extra information with an object **without preventing that object from being garbage collected**.
+
+A normal `Map` keeps a **strong reference** to its keys.
+
+```javascript
+const map = new Map();
+
+let user = { name: "Ali" };
+
+map.set(user, "Online");
+
+user = null;
+```
+
+Even though `user` is now `null`, the object is **still alive** because the `Map` is holding onto it as a key.
+
+Think of the `Map` as saying:
+
+> "I'm still using this object, so don't delete it."
+
+If many such objects accumulate, memory usage grows.
+
+
+## WeakMap
+
+A `WeakMap` stores **object keys only** and holds them **weakly**.
+
+```javascript
+const weakMap = new WeakMap();
+
+let user = { name: "Ali" };
+
+weakMap.set(user, "Online");
+
+user = null;
+```
+
+Now, once there are no other references to that object, JavaScript can remove it from memory—even though it was used as a key in the `WeakMap`.
+
+**Analogy:** Imagine a sticky note attached to a student's ID card.
+
+* **Map:** You keep the ID card forever because of the sticky note.
+* **WeakMap:** The sticky note disappears automatically when the student throws away the ID card.
+
+---
+
+## WeakSet
+
+A `WeakSet` works the same way, but it stores **objects only** (no values).
+
+```javascript
+const weakSet = new WeakSet();
+
+let obj = {};
+
+weakSet.add(obj);
+
+obj = null;
+```
+
+When the object has no other references, it can be garbage collected, and it automatically disappears from the `WeakSet`.
+
+
+## Limitations of WeakMap and WeakSet
+
+Because their contents can disappear at any time due to garbage collection, JavaScript does **not** let you:
+
+* Iterate over them (`for...of` doesn't work)
+* Check their size
+* List all keys or values
+
+Only basic operations are available:
+
+**WeakMap**
+
+* `set()`
+* `get()`
+* `has()`
+* `delete()`
+
+**WeakSet**
+
+* `add()`
+* `has()`
+* `delete()`
+
+---
+
+## Summary
+
+| Feature               | Map         | Set           | WeakMap                | WeakSet                  |
+| --------------------- | ----------- | ------------- | ---------------------- | ------------------------ |
+| Stores                | Key → Value | Unique values | Object → Value         | Objects only             |
+| Object keys           | ✅           | Values only   | ✅ (required)           | ✅ (required)             |
+| Primitive keys/values | ✅           | ✅             | ❌ Keys must be objects | ❌ Values must be objects |
+| Iterable              | ✅           | ✅             | ❌                      | ❌                        |
+| `size` property       | ✅           | ✅             | ❌                      | ❌                        |
+| Prevents GC           | ✅           | ✅             | ❌                      | ❌                        |
+
+
+<Callout title="Note" type="success">
+Once you're comfortable with these APIs, the next step is understanding **how JavaScript's garbage collector works internally (reference graphs, reachability, and memory management)**. That knowledge makes the behavior of `WeakMap` and `WeakSet` feel completely natural rather than something to memorize.
+</Callout>
+
+
 ### `Map` vs. Plain Objects
 
 | Feature | `Map` | Plain Object |
