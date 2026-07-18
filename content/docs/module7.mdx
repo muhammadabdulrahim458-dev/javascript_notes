@@ -73,7 +73,77 @@ graph TD
 Think of it like a **family tree**. `document` is the great-grandparent at the very top. Every tag you wrote becomes a "child" of whichever tag it was nested inside. `<p>` is nested inside `<article>`, so in the DOM, `<p>` is a **child** of `<article>`, and `<article>` is its **parent**.
 </Callout>
 
+If you want to provide a solid, traditional "From Zero" foundation before jumping into `querySelector`, you should cover the classic element selectors, how they differ, and what they actually return.
 
+Here is the authentic content, complete with code snippets and DevTools screenshot guides, tailored to match your module's style. You can insert this right before **Step 2: Walking the tree**.
+
+---
+
+### Selectors ⭐
+
+Before `querySelector` existed, the browser gave us specific, fast methods to grab elements based on their exact attributes. Knowing these is essential because you will see them in almost every legacy codebase.
+
+```javascript
+// 1. Grab a single unique element by its ID attribute
+// Returns: A single Element object (or null)
+const mainHeader = document.getElementById("main-header");
+
+// 2. Grab elements by their tag name
+// Returns: A live HTMLCollection of all matching tags
+const allParagraphs = document.getElementsByTagName("p");
+
+// 3. Grab elements by their class name
+// Returns: A live HTMLCollection of all matching classes
+const postItems = document.getElementsByClassName("post-item");
+
+```
+
+#### Why we upgraded to `querySelector`
+
+The traditional methods require you to change functions depending on what you are looking for. `querySelector` and `querySelectorAll` standardized this by letting you use the exact same CSS syntax you already use for styling:
+
+```javascript
+// The modern way replaces all three with one predictable syntax:
+const mainHeader = document.querySelector("#main-header");
+const firstParagraph = document.querySelector("p");
+const postItems = document.querySelectorAll(".post-item");
+
+```
+
+<video 
+  src="/videos/Dom Selector 1 encoded.mp4" 
+  className="w-full rounded-md border" 
+  preload="metadata" 
+  controls 
+  loop 
+  autoPlay 
+  muted 
+  playsInline
+/>
+
+
+
+### Understanding the `document` Object
+
+To interact with any of these selectors, you always start with the word `document`.
+
+Think of `document` as the global gateway or the "master controller" object provided by the browser. It represents the entire web page currently loaded in the tab. If you don't prefix your selectors with `document.`, JavaScript has no context of where to look.
+
+---
+
+📸 **Screenshot Guide for DevTools:**
+
+1. Go to the **Console** tab and type:
+```javascript
+console.dir(document);
+
+```
+
+
+2. *What to screenshot:* Expand the resulting `document` object dropdown. Show the massive list of built-in properties and methods (like `.URL`, `.title`, `.body`, and `.location`) to show students that the webpage is literally just a giant JavaScript object under the hood.
+
+
+![document](/dom2.png)
 
 ### Step 2: Walking the tree in JavaScript
 
