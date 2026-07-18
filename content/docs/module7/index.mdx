@@ -1,0 +1,687 @@
+---
+meta-description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-og:description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-og:title: Module 7 — DOM Engineering & Browser APIs
+meta-twitter:card: summary_large_image
+meta-twitter:description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-twitter:title: Module 7 — DOM Engineering & Browser APIs
+meta-viewport: width=device-width, initial-scale=1
+title: Module 7 — DOM Engineering & Browser APIs
+description: Browser Fundamentals
+---
+
+
+<Callout type='info'>
+Before learning the DOM, understand **how a browser converts code into pixels on the screen.**
+</Callout>
+
+![dom](/dom1.webp)
+
+
+## 🎯 Learning Objectives
+
+After this chapter you should understand:
+
+* What a browser actually is
+* Browser architecture
+* Browser processes
+* Rendering Engine
+* JavaScript Engine
+* HTML Parsing
+* CSS Parsing
+* DOM Tree
+* CSSOM
+* Render Tree
+* Layout
+* Paint
+* Composite
+* Rendering Pipeline
+
+
+## Why Should We Learn Browser Internals?
+
+Most beginners think
+
+```
+HTML
+↓
+
+Browser
+
+↓
+
+Website
+```
+
+Reality is much more complex.
+
+```mermaid
+graph TD
+    HTML[HTML]
+    DOM[DOM]
+    CSSOM[CSSOM]
+    RenderTree[Render Tree]
+    Layout[Layout]
+    Paint[Paint]
+    Composite[Composite]
+    Screen[Screen]
+
+    HTML --> DOM
+    DOM --> RenderTree
+    CSSOM --> RenderTree
+    RenderTree --> Layout
+    Layout --> Paint
+    Paint --> Composite
+    Composite --> Screen
+
+    %% Color Adjustments
+    style HTML fill:#FF6B6B,stroke:#E03131,stroke-width:2px,color:#fff
+    style DOM fill:#FF922B,stroke:#F76707,stroke-width:2px,color:#fff
+    style CSSOM fill:#339AF0,stroke:#1C7ED6,stroke-width:2px,color:#fff
+    style RenderTree fill:#94D82D,stroke:#74B816,stroke-width:2px,color:#fff
+    style Layout fill:#FCC419,stroke:#F59F00,stroke-width:2px,color:#fff
+    style Paint fill:#20C997,stroke:#0CA678,stroke-width:2px,color:#fff
+    style Composite fill:#845EF7,stroke:#7048E8,stroke-width:2px,color:#fff
+    style Screen fill:#495057,stroke:#212529,stroke-width:2px,color:#fff
+```
+
+If you understand this pipeline, you can solve almost every frontend performance problem.
+
+
+## Real Life Analogy
+
+Imagine building a house.
+
+```mermaid
+graph TD
+    A[Step 1: Architect receives blueprint <br><b>HTML</b>] --> B[Step 2: Engineers decide paint colors <br><b>CSS</b>]
+    B --> C[Step 3: Workers combine blueprint + paint plan <br><b>Render Tree</b>]
+    C --> D[Step 4: Measure every room <br><b>Layout</b>]
+    D --> E[Step 5: Paint walls <br><b>Paint</b>]
+    E --> F[Step 6: Place furniture and decorations <br><b>Composite</b>]
+    F --> G[Ready House]
+```
+
+Exactly how browsers build webpages.
+
+
+## What is a Browser?
+
+A browser is **software that understands web technologies and displays web pages**.
+
+Examples
+
+* Chrome
+* Edge
+* Firefox
+* Safari
+* Brave
+
+A browser's responsibilities include:
+
+* Downloading HTML
+* Downloading CSS
+* Downloading JavaScript
+* Executing JavaScript
+* Rendering the UI
+* Handling user interactions
+* Managing storage
+* Managing network requests
+* Enforcing security
+
+Think of the browser as a **mini operating system dedicated to web applications**.
+
+---
+
+## Browser Architecture
+
+Modern browsers consist of multiple independent processes for performance and security.
+
+```mermaid
+flowchart LR
+
+Browser["Browser Process"]
+
+Renderer1["Renderer Process (Tab 1)"]
+
+Renderer2["Renderer Process (Tab 2)"]
+
+GPU["GPU Process"]
+
+Network["Network Process"]
+
+Extension["Extension Process"]
+
+Browser --> Renderer1
+Browser --> Renderer2
+Browser --> GPU
+Browser --> Network
+Browser --> Extension
+```
+
+---
+
+## 1. Browser Process
+
+Controls everything.
+
+Responsibilities:
+
+* Tabs
+* Address bar
+* Navigation
+* Bookmarks
+* History
+* Permissions
+
+Think of it as the **manager**.
+
+---
+
+## 2. Renderer Process
+
+Every tab gets its own renderer.
+
+Responsibilities:
+
+* Parse HTML
+* Parse CSS
+* Execute JavaScript
+* Build DOM
+* Render UI
+
+Think of it as the **construction team**.
+
+---
+
+## 3. GPU Process
+
+Handles
+
+* Animations
+* CSS transforms
+* Videos
+* Hardware acceleration
+
+Analogy:
+
+Instead of asking one worker to lift a heavy object, you use a crane.
+
+---
+
+## 4. Network Process
+
+Responsible for
+
+* HTTP Requests
+* HTTPS
+* Caching
+* Downloads
+
+---
+
+## 5. Extension Process
+
+Runs browser extensions safely.
+
+Examples:
+
+AdBlock, Grammarly, Dark Reader
+
+---
+
+## Why Multiple Processes?
+
+Imagine opening ten tabs.
+
+Without process isolation:
+
+```mermaid
+graph TD
+    A[One tab crashes] --> B[Entire browser crashes]
+```
+
+Modern browsers:
+
+```mermaid
+graph TD
+    A[Tab 1 crashes] --> B[Only Tab 1 dies]
+    B --> C[Other tabs survive]
+```
+
+This is called **Process Isolation**.
+
+---
+
+## Inside the Renderer Process
+
+<Callout title='For More information please visit :' type='info'>
+https://developer.chrome.com/blog/inside-browser-part3
+</Callout>
+
+
+
+The renderer itself contains multiple engines.
+
+```mermaid
+flowchart TB
+
+Renderer
+
+Renderer --> RenderingEngine
+
+Renderer --> JavaScriptEngine
+
+Renderer --> EventLoop
+
+Renderer --> DOM
+
+Renderer --> CSSOM
+```
+
+---
+
+## Rendering Engine
+
+Responsible for displaying webpages.
+
+Chrome uses
+
+**Blink**
+
+Responsibilities:
+
+* Parse HTML
+* Parse CSS
+* Build DOM
+* Build CSSOM
+* Render Tree
+* Layout
+* Paint
+
+```mermaid
+graph TD
+    A[Parse HTML] --> B[Build DOM]
+    C[Parse CSS] --> D[Build CSSOM]
+    B --> E[Render Tree]
+    D --> E
+    E --> F[Layout]
+    F --> G[Paint]
+```
+---
+
+## JavaScript Engine
+
+Responsible for executing JavaScript.
+
+Chrome uses
+
+**V8 Engine**
+
+Responsibilities:
+
+* Parse JavaScript
+* Compile JavaScript
+* Execute JavaScript
+* Garbage Collection
+* Memory Management
+
+Think of V8 as the **brain** of your JavaScript application.
+
+---
+
+## Browser Rendering Pipeline
+
+This is the most important concept in DOM Engineering.
+
+```mermaid
+flowchart TD
+
+HTML --> HTMLParser
+
+CSS --> CSSParser
+
+HTMLParser --> DOM
+
+CSSParser --> CSSOM
+
+DOM --> RenderTree
+
+CSSOM --> RenderTree
+
+RenderTree --> Layout
+
+Layout --> Paint
+
+Paint --> Composite
+
+Composite --> Screen
+```
+
+Memorize this pipeline. It appears in interviews, performance debugging, and browser optimization.
+
+
+## Step 1 — HTML Parsing
+
+Browser receives HTML.
+
+Example
+
+```html
+<body>
+  <h1>Hello</h1>
+  <p>Welcome</p>
+</body>
+```
+
+The browser doesn't display this text directly.
+
+Instead it creates objects.
+
+```
+Body
+↓
+h1
+↓
+p
+```
+
+These objects form the DOM Tree.
+
+
+## Step 2 — DOM Tree
+
+DOM stands for
+
+**Document Object Model**
+
+HTML
+
+```html
+<body>
+    <h1>Hello</h1>
+    <p>Welcome</p>
+</body>
+```
+
+DOM Tree
+
+```mermaid
+graph TD
+    Document --> html
+    html --> head
+    html --> body
+    body --> h1
+    body --> p
+```
+
+The DOM is a live object model that JavaScript can read and modify.
+
+
+## Step 3 — CSS Parsing
+
+CSS
+
+```css
+h1{
+ color:red;
+}
+
+p{
+ color:blue;
+}
+```
+
+Browser builds
+
+```
+CSSOM
+```
+
+CSSOM (CSS Object Model)
+
+```mermaid
+graph TD
+    Stylesheet --> Rule
+    Rule --> Selector
+    Rule --> Properties
+```
+
+
+## Step 4 — Render Tree
+
+DOM contains everything.
+
+CSSOM contains styles.
+
+Browser merges them.
+
+```mermaid
+graph TD
+    DOM[DOM] --> RenderTree[Render Tree]
+    CSSOM[CSSOM] --> RenderTree
+```
+
+Only **visible** elements become part of the Render Tree.
+
+Example
+
+```html
+<div>Hello</div>
+
+<div style="display:none">
+Hidden
+</div>
+```
+
+Render Tree contains
+
+```
+div
+
+```
+NOT hidden `div` Because `display: none` removes it from rendering.
+
+
+## Step 5 — Layout (Reflow)
+
+Now the browser calculates
+
+* Width
+* Height
+* Position
+* Margin
+* Padding
+
+Everything receives exact coordinates.
+
+Example
+
+**Button:**
+```
+Width = 150px
+
+Height = 40px
+
+X = 250px
+
+Y = 500px
+```
+
+Without layout, the browser knows an element exists but not where to place it.
+
+
+## Step 6 — Paint
+
+Browser paints
+
+* Text
+* Borders
+* Shadows
+* Backgrounds
+* Images
+
+Imagine coloring a sketch after all measurements are complete.
+
+
+## Step 7 — Composite
+
+Finally, layers are combined.
+
+GPU joins them together.
+
+Screen displays
+
+```
+Finished Website
+```
+
+
+## Complete Rendering Flow
+
+```mermaid
+graph TD
+    HTML[HTML]
+    DOM[DOM]
+    CSSOM[CSSOM]
+    RenderTree[Render Tree]
+    Layout[Layout]
+    Paint[Paint]
+    Composite[Composite]
+    Screen[Screen]
+
+    HTML --> DOM
+    DOM --> RenderTree
+    CSSOM --> RenderTree
+    RenderTree --> Layout
+    Layout --> Paint
+    Paint --> Composite
+    Composite --> Screen
+
+    %% Color Adjustments
+    style HTML fill:#FF6B6B,stroke:#E03131,stroke-width:2px,color:#fff
+    style DOM fill:#FF922B,stroke:#F76707,stroke-width:2px,color:#fff
+    style CSSOM fill:#339AF0,stroke:#1C7ED6,stroke-width:2px,color:#fff
+    style RenderTree fill:#94D82D,stroke:#74B816,stroke-width:2px,color:#fff
+    style Layout fill:#FCC419,stroke:#F59F00,stroke-width:2px,color:#fff
+    style Paint fill:#20C997,stroke:#0CA678,stroke-width:2px,color:#fff
+    style Composite fill:#845EF7,stroke:#7048E8,stroke-width:2px,color:#fff
+    style Screen fill:#495057,stroke:#212529,stroke-width:2px,color:#fff
+```
+
+This is the rendering pipeline every modern browser follows.
+
+---
+
+## What Happens When JavaScript Changes the DOM?
+
+Example
+
+```javascript
+document.querySelector("h1").textContent = "Welcome!";
+```
+
+The browser does not rebuild everything from scratch. It intelligently updates the affected parts:
+
+```mermaid
+graph TD
+    JS[JavaScript] --> DOM[DOM Updated]
+    DOM --> Style[Style Recalculation <br><i>if needed</i>]
+    Style --> Layout[Layout <br><i>if geometry changed</i>]
+    Layout --> Paint[Paint <br><i>if appearance changed</i>]
+    Paint --> Comp[Composite]
+    Comp --> Screen[Updated Screen]
+
+    %% Color Adjustments
+    style JS fill:#F7DF1E,stroke:#D6B500,stroke-width:2px,color:#000
+    style DOM fill:#FF922B,stroke:#F76707,stroke-width:2px,color:#fff
+    style Style fill:#339AF0,stroke:#1C7ED6,stroke-width:2px,color:#fff
+    style Layout fill:#FCC419,stroke:#F59F00,stroke-width:2px,color:#fff
+    style Paint fill:#20C997,stroke:#0CA678,stroke-width:2px,color:#fff
+    style Comp fill:#845EF7,stroke:#7048E8,stroke-width:2px,color:#fff
+    style Screen fill:#495057,stroke:#212529,stroke-width:2px,color:#fff
+```
+
+Understanding which operations trigger style recalculation, layout, or paint is the foundation of frontend performance optimization.
+
+---
+
+## Industry Insight
+
+Performance engineers spend a lot of time avoiding unnecessary work in this pipeline. For example:
+
+* Changing only `color` usually skips layout and only repaints.
+* Changing `width` often forces layout because element sizes and positions change.
+* Animating `transform` or `opacity` is usually the most efficient because it can often be handled by the compositor and GPU.
+
+We'll explore these optimizations in later chapters.
+
+
+## Common Misconceptions
+
+❌ HTML is the DOM.
+
+✔️ HTML is **source code**. The DOM is an **object tree** created from that source.
+
+
+❌ CSS directly styles HTML.
+
+✔️ CSS is first parsed into the **CSSOM**, then combined with the DOM.
+
+
+❌ JavaScript changes the screen directly.
+
+✔️ JavaScript modifies the DOM or CSSOM, and the browser decides how to update the rendered page.
+
+
+## Interview Questions
+
+1. What is the difference between the DOM and HTML?
+2. What is the CSSOM?
+3. What is the Render Tree?
+4. Why are elements with `display: none` excluded from the Render Tree?
+5. Explain the browser rendering pipeline.
+6. What is the role of the Renderer Process?
+7. What is the difference between Blink and V8?
+8. Why do modern browsers use multiple processes?
+9. What happens after JavaScript modifies the DOM?
+10. Which rendering stages are the most expensive, and why?
+
+
+## Exam Notes (20% That Covers 100%)
+
+* **Browser:** Software that downloads resources, executes JavaScript, renders pages, and enforces web security.
+* **Browser Process:** Manages tabs, navigation, history, permissions, and coordinates other processes.
+* **Renderer Process:** Parses HTML/CSS, executes JavaScript, builds the DOM and CSSOM, and renders the page.
+* **Blink:** Chrome's rendering engine responsible for turning HTML/CSS into pixels.
+* **V8:** Chrome's JavaScript engine responsible for compiling and executing JavaScript.
+* **DOM:** Object representation of the HTML document.
+* **CSSOM:** Object representation of all parsed CSS rules.
+* **Render Tree:** Combination of the DOM and CSSOM containing only visible elements.
+* **Layout (Reflow):** Calculates the size and position of every visible element.
+* **Paint:** Draws text, colors, borders, backgrounds, and images.
+* **Composite:** Combines painted layers into the final image displayed on the screen.
+* **Rendering Pipeline:** HTML → DOM → CSSOM → Render Tree → Layout → Paint → Composite → Screen.
+
+
+## Hands-on Practice
+
+Create a simple HTML page with a heading, paragraph, image, and button.
+
+1. Open Chrome DevTools (`F12`).
+2. Inspect the **Elements** panel to view the live DOM tree.
+3. Open the **Console** and execute:
+
+```javascript
+document.querySelector("h1").textContent = "Browser Engineering!";
+```
+
+Observe how the page updates instantly without a full reload.
+
+Then experiment by changing:
+
+* `style.color`
+* `style.width`
+* `style.display`
+
+As you proceed through this module, revisit this page to observe how different DOM and CSS changes affect the browser's rendering pipeline. This practical understanding will make the later topics—reflow, repaint, event handling, and performance optimization—much easier to master.
