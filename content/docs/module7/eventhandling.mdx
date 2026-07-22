@@ -430,7 +430,7 @@ Practical Example
 
 ---
 
-# Useful Event Properties
+## Useful Event Properties
 
 ```javascript
 event.type
@@ -442,8 +442,6 @@ Returns
 click
 ```
 
----
-
 ```javascript
 event.target
 ```
@@ -451,8 +449,6 @@ event.target
 Returns
 
 The actual clicked element.
-
----
 
 ```javascript
 event.currentTarget
@@ -462,15 +458,12 @@ Returns
 
 The element whose listener is executing.
 
----
-
 ```javascript
 event.clientX
 ```
 
 Mouse X position.
 
----
 
 ```javascript
 event.clientY
@@ -478,9 +471,8 @@ event.clientY
 
 Mouse Y position.
 
----
 
-# Example
+### Example
 
 ```javascript
 button.addEventListener("click",(event)=>{
@@ -496,7 +488,7 @@ console.log(event.clientX);
 
 ---
 
-# Event Flow
+## Event Flow
 
 This is the most important concept.
 
@@ -504,17 +496,13 @@ Imagine this HTML.
 
 ```html
 <div>
-
     <button>
-
         Click
-
     </button>
-
 </div>
 ```
 
-Question
+**Question**
 
 When the button is clicked,
 
@@ -536,25 +524,41 @@ Just not at the same time.
 
 ---
 
-# The Three Phases
+## The Three Phases
 
-```text
-Capturing
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#38BDF8',
+    'edgeLabelBackground': '#ffffff',
+    'tertiaryColor': '#fff'
+  }
+}}%%
 
-↓
+flowchart TD
+    %% Nodes
+    A([📥 1. Capturing Phase]):::phase1
+    B[🎯 2. Target Phase]:::phase2
+    C([📤 3. Bubbling Phase]):::phase3
 
-Target
+    %% Flow Connections
+    A ==> B
+    B ==> C
 
-↓
+    %% Styling (Optimized for both Light and Dark Themes)
+    classDef phase1 fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0369A1,rx:20,ry:20;
+    classDef phase2 fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#92400E,rx:8,ry:8;
+    classDef phase3 fill:#D1FAE5,stroke:#059669,stroke-width:2px,color:#065F46,rx:20,ry:20;
 
-Bubbling
+    %% Connecting Arrow Style
+    linkStyle default stroke:#64748B,stroke-width:2px,fill:none;
 ```
 
 Memorize this.
 
 Every browser follows these three phases.
 
----
 
 ## Step 1 — Capturing Phase
 
@@ -588,7 +592,6 @@ Button
 
 Think of it as travelling **down** the tree.
 
----
 
 ## Step 2 — Target Phase
 
@@ -600,7 +603,6 @@ Button
 
 Your button listener executes.
 
----
 
 ## Step 3 — Bubbling Phase
 
@@ -632,64 +634,68 @@ Document
 Window
 ```
 
----
 
-# Complete Visualization
+## Complete Visualization
 
-```text
-Window
-│
-Document
-│
-HTML
-│
-BODY
-│
-DIV
-│
-BUTTON
+```mermaid
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#38BDF8',
+    'edgeLabelBackground': '#ffffff',
+    'tertiaryColor': '#fff'
+  }
+}}%%
 
-Capturing
-↓
+flowchart LR
+    subgraph Phase1 ["1. Capturing Phase (Top-Down)"]
+        direction TB
+        W1["Window"] --> D1["Document"]
+        D1 --> H1["HTML"]
+        H1 --> B1["BODY"]
+        B1 --> DIV1["DIV"]
+    end
 
-↓
+    subgraph Phase2 ["2. Target Phase"]
+        direction TB
+        T["<b>BUTTON</b><br/><i>(event.target)</i>"]
+    end
 
-↓
+    subgraph Phase3 ["3. Bubbling Phase (Bottom-Up)"]
+        direction TB
+        DIV2["DIV"] --> B2["BODY"]
+        B2 --> H2["HTML"]
+        H2 --> D2["Document"]
+        D2 --> W2["Window"]
+    end
 
-↓
+    %% Phase Connections
+    DIV1 ==> T
+    T ==> DIV2
 
-↓
+    %% Styling (Optimized for both Light and Dark Themes)
+    classDef cap fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0369A1,rx:8,ry:8;
+    classDef tar fill:#FEF3C7,stroke:#D97706,stroke-width:2px,color:#92400E,rx:12,ry:12;
+    classDef bub fill:#D1FAE5,stroke:#059669,stroke-width:2px,color:#065F46,rx:8,ry:8;
 
-Target
+    class W1,D1,H1,B1,DIV1 cap;
+    class T tar;
+    class DIV2,B2,H2,D2,W2 bub;
 
-↑
-
-↑
-
-↑
-
-↑
-
-↑
-
-Bubbling
+    %% Connecting Line Style
+    linkStyle default stroke:#64748B,stroke-width:2px,fill:none;
 ```
 
 This explains why clicking a child element can also trigger handlers attached to its ancestors.
 
----
 
-# Example
+### Example
 
 ```html
 <div id="parent">
-
 <button id="child">
-
 Click
-
 </button>
-
 </div>
 ```
 
@@ -707,23 +713,22 @@ console.log("Child");
 });
 ```
 
-Click button
+When **button** is clicked
 
-Output
+**Output**
 
 ```
 Child
-
 Parent
 ```
 
-Why?
+**Why?**
 
 Because bubbling happens after the target phase.
 
 ---
 
-# Event Bubbling in Real Life
+## Event Bubbling in Real Life
 
 Imagine dropping a stone into a pond.
 
@@ -739,13 +744,10 @@ Water
 Ripples move outward
 ```
 
-The click starts at the target.
+The click starts at the target.Then spreads upward through parents.
 
-Then spreads upward through parents.
 
----
-
-# `stopPropagation()`
+## `stopPropagation()`
 
 Stops further propagation.
 
@@ -765,9 +767,8 @@ Child
 
 Parent never receives the event.
 
----
 
-# `preventDefault()`
+## `preventDefault()`
 
 Some HTML elements have default behavior.
 
@@ -775,21 +776,19 @@ Example
 
 ```html
 <a href="https://google.com">
-
 Google
-
 </a>
 ```
 
 Normally
 
+```text
 Click
 
 ↓
 
 Browser opens Google.
-
----
+```
 
 Prevent it
 
@@ -805,7 +804,7 @@ Now
 
 No navigation.
 
-Useful for
+**Useful for**
 
 * Form Validation
 * SPA Routing
@@ -813,7 +812,7 @@ Useful for
 
 ---
 
-# Event Delegation
+## Event Delegation
 
 One of the most important engineering techniques.
 
@@ -832,12 +831,10 @@ button.addEventListener(...);
 ```
 
 10,000 listeners.
-
 Large memory usage.
 
----
 
-Better
+**Better**
 
 Attach
 
@@ -857,9 +854,8 @@ event.target
 
 to determine which child was clicked.
 
----
 
-Example
+**Example**
 
 ```html
 <ul id="list">
@@ -874,11 +870,12 @@ Example
 ```
 
 ```javascript
+const list = document.querySelector('#list');
+
 list.addEventListener("click",(event)=>{
-
 console.log(event.target.textContent);
-
 });
+
 ```
 
 Click
@@ -893,13 +890,11 @@ Output
 Mango
 ```
 
-One listener.
-
-Unlimited list items.
+One listener with Unlimited list items.
 
 ---
 
-# Why React Uses Event Delegation
+## Why React Uses Event Delegation
 
 React doesn't attach listeners to every component.
 
@@ -911,7 +906,7 @@ Then,
 
 it uses the Event Object to determine what was clicked.
 
-Benefits
+**Benefits**
 
 * Less memory
 * Faster startup
@@ -920,7 +915,7 @@ Benefits
 
 ---
 
-# Removing Event Listeners
+## Removing Event Listeners
 
 Sometimes you need to clean up listeners to avoid memory leaks.
 
@@ -935,31 +930,30 @@ button.addEventListener("click", handleClick);
 button.removeEventListener("click", handleClick);
 ```
 
-**Important:** The same function reference must be passed to `removeEventListener()`. Anonymous arrow functions cannot be removed because you no longer have a reference to them.
 
----
+<Callout type='warn' title='Important!'>
+The same function reference must be passed to `removeEventListener()`. Anonymous arrow functions cannot be removed because you no longer have a reference to them.
+</Callout>
 
-# Common Mistakes
+
+## Common Mistakes
 
 ❌ Creating thousands of identical event listeners.
 
 ✔️ Use **event delegation** whenever appropriate.
 
----
 
 ❌ Using `preventDefault()` to stop bubbling.
 
 ✔️ `preventDefault()` stops the browser's default action, **not** event propagation.
 
----
 
 ❌ Assuming `event.target` and `event.currentTarget` are always the same.
 
 ✔️ `event.target` is the element that originated the event; `event.currentTarget` is the element whose listener is currently executing.
 
----
 
-# Interview Questions
+## Interview Questions
 
 1. What is an Event?
 2. What is the Event Object?
@@ -972,9 +966,8 @@ button.removeEventListener("click", handleClick);
 9. Why does React use Event Delegation?
 10. Why should you remove unused event listeners?
 
----
 
-# Exam Notes (20% That Covers 100%)
+## Exam Notes (20% That Covers 100%)
 
 * **Event:** A notification generated by the browser when an interaction or change occurs.
 * **Event Listener:** A function registered with `addEventListener()` that runs when a specific event occurs.
@@ -986,9 +979,8 @@ button.removeEventListener("click", handleClick);
 * **`stopPropagation()`:** Stops the event from continuing through the propagation phases.
 * **Event Delegation:** A technique where a parent element handles events for its child elements using a single listener, improving performance and scalability.
 
----
 
-# 🏗️ Mini Project — Interactive Todo List
+## 🏗️ Mini Project — Interactive Todo List
 
 Upgrade the Todo application from the previous chapter:
 
