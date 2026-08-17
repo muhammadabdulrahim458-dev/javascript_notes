@@ -1,0 +1,1569 @@
+---
+meta-description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-og:description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-og:title: Module 7 — DOM Engineering & Browser APIs
+meta-twitter:card: summary_large_image
+meta-twitter:description: DOM Tree Composition, Reflow/Repaint, the Event System, Event Delegation, Browser Storage, and Modern Fetch/Stream APIs — explained from the absolute basics up
+meta-twitter:title: Module 7 — DOM Engineering & Browser APIs
+meta-viewport: width=device-width, initial-scale=1
+title: Browser Storage
+description: Browser storage is basically the browser's way of giving a web application persistent or temporary memory.
+---
+
+Think of your web application as a person:
+
+* **JavaScript variables** → short-term memory
+* **`sessionStorage`** → memory for the current browser tab/session
+* **`localStorage`** → a small notebook that survives restarting the browser
+* **Cookies** → small pieces of information that are automatically sent with HTTP requests
+* **IndexedDB** → a local database for larger/structured data
+
+The important engineering question is not:
+
+> “How do I store something?”
+
+It is:
+
+> **“What data am I storing, for how long, who needs it, how much data is there, and should it travel to the server?”**
+
+---
+
+# 1. Why Browser Storage Exists
+
+Consider an e-commerce website.
+
+You select:
+
+* Dark mode
+* Language = English
+* Cart items
+* Recently viewed products
+
+If everything were stored only in JavaScript variables:
+
+```js
+let theme = "dark";
+```
+
+then refreshing the page would destroy that state.
+
+Why?
+
+Because JavaScript memory belongs to the current page execution.
+
+When the page is unloaded:
+
+```text
+JavaScript execution
+       ↓
+Page destroyed
+       ↓
+Memory destroyed
+```
+
+So browsers provide persistent storage mechanisms.
+
+```text
+                Browser
+                   │
+       ┌───────────┼────────────┐
+       │           │            │
+ localStorage  sessionStorage  IndexedDB
+       │           │            │
+ persistent    tab/session    persistent
+```
+
+Cookies are slightly different because they participate directly in HTTP communication.
+
+---
+
+# 2. The First Important Concept: Origin
+
+Before learning storage APIs, you need to understand **origin**.
+
+An origin is essentially:
+
+```text
+scheme + host + port
+```
+
+For example:
+
+```text
+https://example.com:443
+```
+
+has:
+
+```text
+scheme = https
+host   = example.com
+port   = 443
+```
+
+So these are different origins:
+
+```text
+https://example.com
+http://example.com
+https://api.example.com
+https://example.com:3000
+```
+
+This matters because browser storage is generally isolated by origin.
+
+For example:
+
+```js
+localStorage.setItem("theme", "dark");
+```
+
+on:
+
+```text
+https://example.com
+```
+
+doesn't mean that:
+
+```text
+https://google.com
+```
+
+can read it.
+
+This is an important part of the browser's **same-origin security model**.
+
+---
+
+# 3. `localStorage`
+
+Let's start with the simplest persistent storage mechanism.
+
+```js
+localStorage.setItem("username", "hafaz");
+```
+
+Now:
+
+```js
+localStorage.getItem("username");
+```
+
+returns:
+
+```text
+hafaz
+```
+
+The data survives page reloads.
+
+```text
+Open page
+   ↓
+setItem()
+   ↓
+Refresh
+   ↓
+Data still exists
+```
+
+Even restarting the browser normally doesn't remove it.
+
+---
+
+# 4. The Storage API
+
+The core API is extremely small.
+
+### Store
+
+```js
+localStorage.setItem("name", "Hafaz");
+```
+
+### Read
+
+```js
+const name = localStorage.getItem("name");
+```
+
+### Delete one item
+
+```js
+localStorage.removeItem("name");
+```
+
+### Delete everything for that origin
+
+```js
+localStorage.clear();
+```
+
+### Number of entries
+
+```js
+console.log(localStorage.length);
+```
+
+### Access by index
+
+```js
+localStorage.key(0);
+```
+
+So conceptually:
+
+```text
+localStorage
+     │
+     ├── key → value
+     ├── key → value
+     ├── key → value
+     └── key → value
+```
+
+---
+
+# 5. Very Important: Everything Is Stored as a String
+
+This is one of the first things engineers need to understand.
+
+If you do:
+
+```js
+localStorage.setItem("age", 22);
+```
+
+you might think:
+
+```text
+22 → number
+```
+
+But storage works with strings.
+
+Conceptually:
+
+```text
+22
+↓
+"22"
+```
+
+Therefore:
+
+```js
+const age = localStorage.getItem("age");
+
+console.log(typeof age);
+```
+
+gives:
+
+```text
+"string"
+```
+
+not:
+
+```text
+"number"
+```
+
+---
+
+# 6. The Object Problem
+
+Suppose you have:
+
+```js
+const user = {
+    name: "Hafaz",
+    age: 22
+};
+```
+
+You cannot meaningfully do:
+
+```js
+localStorage.setItem("user", user);
+```
+
+because the storage API expects a string.
+
+The object gets converted through normal JavaScript string conversion and you can end up with:
+
+```text
+[object Object]
+```
+
+instead of the actual structure.
+
+---
+
+# 7. JSON Serialization
+
+This is where JSON becomes extremely important.
+
+Use:
+
+```js
+localStorage.setItem(
+    "user",
+    JSON.stringify(user)
+);
+```
+
+Now the object becomes a JSON string:
+
+```text
+{
+    "name": "Hafaz",
+    "age": 22
+}
+```
+
+Then retrieve it:
+
+```js
+const user = JSON.parse(
+    localStorage.getItem("user")
+);
+```
+
+So the complete cycle is:
+
+```text
+JavaScript Object
+       ↓
+JSON.stringify()
+       ↓
+String
+       ↓
+localStorage
+       ↓
+String
+       ↓
+JSON.parse()
+       ↓
+JavaScript Object
+```
+
+This process is called:
+
+### Serialization
+
+Converting an in-memory data structure into a storable/transmittable representation.
+
+And the reverse:
+
+### Deserialization
+
+Converting that representation back into an in-memory structure.
+
+---
+
+# 8. Real-World Example: Saving Theme
+
+Imagine your application has:
+
+```js
+let theme = "dark";
+```
+
+Instead of losing it after refresh:
+
+```js
+localStorage.setItem("theme", "dark");
+```
+
+Then when the application starts:
+
+```js
+const theme = localStorage.getItem("theme");
+
+if (theme === "dark") {
+    document.documentElement.classList.add("dark");
+}
+```
+
+This is an appropriate use case.
+
+Other good examples:
+
+```text
+Theme preference
+Language preference
+UI preferences
+Non-sensitive application settings
+Recently selected filters
+Draft UI state
+```
+
+---
+
+# 9. What Should NOT Go Into `localStorage`?
+
+This is where beginner tutorials often become dangerous.
+
+Do **not** casually store sensitive credentials such as:
+
+```js
+localStorage.setItem("password", password);
+```
+
+or:
+
+```js
+localStorage.setItem("creditCard", card);
+```
+
+or authentication secrets such as long-lived tokens without understanding the security implications.
+
+Why?
+
+Because JavaScript running under your origin can access:
+
+```js
+localStorage
+```
+
+Therefore, if an attacker successfully executes malicious JavaScript through an **XSS vulnerability**, that script can potentially read the stored values.
+
+For example:
+
+```js
+const token = localStorage.getItem("token");
+```
+
+If an attacker gets arbitrary script execution in your origin, browser storage is not a security boundary against that attacker.
+
+This gives us an important engineering rule:
+
+> **Do not treat `localStorage` as a secret vault.**
+
+---
+
+# 10. `localStorage` Is Synchronous
+
+This is another important engineering detail.
+
+When you execute:
+
+```js
+localStorage.setItem("key", "value");
+```
+
+the API is synchronous.
+
+That means JavaScript doesn't use:
+
+```text
+start operation
+     ↓
+continue executing
+     ↓
+callback later
+```
+
+Instead, conceptually:
+
+```text
+JavaScript
+   │
+   │ setItem()
+   ↓
+Storage operation
+   │
+   ↓
+returns
+   │
+   ↓
+JavaScript continues
+```
+
+For tiny values, this is usually fine.
+
+But repeatedly performing storage operations with larger data can contribute to main-thread work.
+
+For example, this is potentially poor architecture:
+
+```js
+for (const item of hugeDataset) {
+    localStorage.setItem(item.id, JSON.stringify(item));
+}
+```
+
+If you need significant structured/local data, **IndexedDB** is usually a more appropriate tool.
+
+---
+
+# 11. `sessionStorage`
+
+Now we move to the second Storage API.
+
+```js
+sessionStorage.setItem("step", "2");
+```
+
+The API looks almost identical:
+
+```js
+sessionStorage.setItem()
+sessionStorage.getItem()
+sessionStorage.removeItem()
+sessionStorage.clear()
+```
+
+The important difference is **lifetime and scope**.
+
+---
+
+# 12. `localStorage` vs `sessionStorage`
+
+Think of them like notebooks.
+
+### `localStorage`
+
+Permanent notebook:
+
+```text
+Browser
+  │
+  └── Origin
+       │
+       └── localStorage
+              ↓
+          survives reload
+          survives browser restart
+```
+
+### `sessionStorage`
+
+Temporary notebook:
+
+```text
+Browser
+  │
+  └── Tab
+       │
+       └── sessionStorage
+              ↓
+          survives reload
+          tied to tab/session
+```
+
+A simplified comparison:
+
+| Feature         | `localStorage`    | `sessionStorage`          |
+| --------------- | ----------------- | ------------------------- |
+| Persistence     | Persistent        | Temporary                 |
+| Page reload     | Survives          | Survives                  |
+| Browser restart | Normally survives | Normally doesn't          |
+| Scope           | Origin            | Origin + browsing context |
+| API             | Synchronous       | Synchronous               |
+| Data type       | Strings           | Strings                   |
+| Structured data | JSON manually     | JSON manually             |
+
+---
+
+# 13. Real Example of `sessionStorage`
+
+Suppose you're building a multi-step form:
+
+```text
+Step 1 → Personal information
+Step 2 → Address
+Step 3 → Confirmation
+```
+
+You might store:
+
+```js
+sessionStorage.setItem("currentStep", "2");
+```
+
+If the user refreshes:
+
+```text
+Step 2
+   ↓
+Refresh
+   ↓
+Still Step 2
+```
+
+But when the browsing session ends, you don't necessarily want that temporary workflow state to remain indefinitely.
+
+This is a good use case for `sessionStorage`.
+
+---
+
+# 14. A Critical Difference: Tabs
+
+Suppose you open:
+
+```text
+Tab A → example.com
+Tab B → example.com
+```
+
+`sessionStorage` is associated with the particular browsing context, so it should not be thought of as a single shared storage bucket for all tabs.
+
+Conceptually:
+
+```text
+example.com
+
+Tab A
+ └── sessionStorage
+
+Tab B
+ └── sessionStorage
+```
+
+Whereas `localStorage` is associated with the origin and is available across pages/tabs of that origin, subject to browser behavior and storage rules.
+
+---
+
+# 15. The `storage` Event
+
+Here's a powerful browser feature.
+
+Suppose two tabs are open:
+
+```text
+Tab A                 Tab B
+   │                     │
+   │ localStorage        │
+   │ change              │
+   └────────────────────>│
+                         │
+                    storage event
+```
+
+You can listen for changes:
+
+```js
+window.addEventListener("storage", (event) => {
+    console.log(event.key);
+    console.log(event.oldValue);
+    console.log(event.newValue);
+});
+```
+
+This can be useful for things like:
+
+```text
+User logs out in Tab A
+          ↓
+Tab B notices
+          ↓
+Tab B updates UI
+```
+
+Important nuance:
+
+The `storage` event is generally fired in **other same-origin browsing contexts**, not the one that performed the change.
+
+---
+
+# 16. Cookies
+
+Cookies are fundamentally different from Web Storage.
+
+A cookie is a small piece of data associated with a website that can be stored by the browser and, depending on its attributes, automatically included in HTTP requests.
+
+Example:
+
+```text
+Browser
+   │
+   │ HTTP request
+   ↓
+Server
+```
+
+A cookie might travel with:
+
+```http
+Cookie: sessionId=abc123
+```
+
+This is a major distinction.
+
+### `localStorage`
+
+```text
+JavaScript
+   ↓
+localStorage
+```
+
+The browser does **not automatically attach localStorage data to every HTTP request**.
+
+### Cookies
+
+```text
+Browser
+   ↓
+HTTP request
+   ↓
+Cookie automatically attached
+```
+
+when the cookie's domain/path/security rules allow it.
+
+---
+
+# 17. Why Cookies Exist
+
+Cookies are particularly useful for **server-managed state**.
+
+For example:
+
+```text
+Browser
+   ↓
+GET /dashboard
+   ↓
+Cookie: sessionId=XYZ
+   ↓
+Server
+   ↓
+Recognizes session
+   ↓
+Returns dashboard
+```
+
+This is one reason cookies remain extremely important in authentication architectures.
+
+---
+
+# 18. Cookie Attributes
+
+Cookies have a much richer security/control model than `localStorage`.
+
+Important attributes include:
+
+```text
+HttpOnly
+Secure
+SameSite
+Domain
+Path
+Expires
+Max-Age
+```
+
+Let's understand the important ones.
+
+---
+
+# 19. `HttpOnly`
+
+This is extremely important.
+
+An `HttpOnly` cookie cannot be read through JavaScript APIs such as:
+
+```js
+document.cookie
+```
+
+For example, the server may send:
+
+```http
+Set-Cookie: sessionId=abc123; HttpOnly
+```
+
+Now:
+
+```js
+document.cookie
+```
+
+cannot expose that cookie to JavaScript.
+
+But the browser can still send it with appropriate HTTP requests.
+
+This provides an important defense against JavaScript-based token theft.
+
+It does **not** magically eliminate all consequences of XSS—an attacker may still perform actions as the user from the compromised page—but it prevents straightforward reading of the cookie value through JavaScript.
+
+---
+
+# 20. `Secure`
+
+A cookie with:
+
+```text
+Secure
+```
+
+is sent only over secure HTTPS connections, subject to the browser's cookie rules.
+
+Conceptually:
+
+```text
+HTTP  ❌
+HTTPS ✅
+```
+
+For production authentication cookies, `Secure` is generally essential.
+
+---
+
+# 21. `SameSite`
+
+This controls how cookies behave in cross-site contexts.
+
+Common values:
+
+```text
+Strict
+Lax
+None
+```
+
+Very roughly:
+
+### `Strict`
+
+More restrictive cross-site cookie sending.
+
+### `Lax`
+
+Allows cookies in some cross-site navigation scenarios and is a common default-oriented choice.
+
+### `None`
+
+Allows cross-site cookie sending, but requires:
+
+```text
+Secure
+```
+
+This becomes important when building systems involving:
+
+```text
+Frontend
+   ↓
+different origin
+   ↓
+Backend
+```
+
+and authentication.
+
+---
+
+# 22. `document.cookie`
+
+JavaScript can interact with cookies through:
+
+```js
+document.cookie
+```
+
+For example:
+
+```js
+console.log(document.cookie);
+```
+
+But remember:
+
+```text
+HttpOnly cookie
+      ↓
+JavaScript cannot read it
+```
+
+This is an important distinction between cookies created/managed by JavaScript and cookies configured securely by the server.
+
+---
+
+# 23. Cookie vs `localStorage`
+
+This is one of the most important interview questions.
+
+| Property                     | `localStorage`           | Cookie                     |
+| ---------------------------- | ------------------------ | -------------------------- |
+| Capacity                     | Small                    | Very small                 |
+| Automatically sent to server | ❌                        | ✅                          |
+| Accessible from JS           | ✅                        | Usually, unless `HttpOnly` |
+| `HttpOnly` support           | ❌                        | ✅                          |
+| `Secure` attribute           | ❌                        | ✅                          |
+| `SameSite`                   | ❌                        | ✅                          |
+| Typical use                  | Client preferences/state | HTTP/session state         |
+| API                          | Web Storage              | HTTP cookie mechanism      |
+
+The key architectural difference is:
+
+> **Cookies are part of the HTTP state mechanism; Web Storage is primarily client-side storage.**
+
+---
+
+# 24. IndexedDB
+
+Now we reach the storage technology that starts feeling like an actual database.
+
+Suppose your application needs to store:
+
+```text
+10,000 products
+cached API responses
+offline documents
+large structured datasets
+files/blobs
+complex application state
+```
+
+`localStorage` becomes a poor fit.
+
+That's where **IndexedDB** comes in.
+
+---
+
+# 25. IndexedDB Mental Model
+
+Think of it as:
+
+```text
+Browser
+   │
+   └── IndexedDB
+          │
+          ├── Database
+          │
+          ├── Object Store
+          │      ├── Record
+          │      ├── Record
+          │      └── Record
+          │
+          └── Indexes
+```
+
+It is a browser-provided **transactional, object-oriented database system**.
+
+Unlike Web Storage, IndexedDB can store structured values without manually converting everything into one giant string.
+
+---
+
+# 26. Example Data
+
+Imagine an offline notes application.
+
+You might have:
+
+```js
+{
+    id: 101,
+    title: "JavaScript",
+    content: "Browser storage...",
+    tags: ["js", "browser"],
+    updatedAt: Date.now()
+}
+```
+
+IndexedDB can store structured records like this.
+
+That's fundamentally different from:
+
+```js
+localStorage.setItem(
+    "note",
+    JSON.stringify(note)
+);
+```
+
+---
+
+# 27. IndexedDB Object Stores
+
+An IndexedDB database contains **object stores**.
+
+Think of an object store somewhat like a database table, although the model is not identical to a relational SQL table.
+
+For example:
+
+```text
+Database: MyApp
+
+Object Stores:
+
+users
+products
+messages
+settings
+```
+
+Then:
+
+```text
+products
+   │
+   ├── product 1
+   ├── product 2
+   ├── product 3
+   └── ...
+```
+
+Indexes can make querying records by properties more efficient.
+
+---
+
+# 28. IndexedDB Transactions
+
+This is a major engineering concept.
+
+Database operations happen through transactions.
+
+Conceptually:
+
+```text
+Transaction begins
+       ↓
+Read/write operations
+       ↓
+Commit
+       ↓
+Changes become durable
+```
+
+or:
+
+```text
+Transaction begins
+       ↓
+Operation fails
+       ↓
+Abort
+       ↓
+Changes rolled back
+```
+
+This gives IndexedDB stronger database-like semantics than `localStorage`.
+
+---
+
+# 29. Why IndexedDB Is More Complicated
+
+Because you're dealing with an actual database abstraction.
+
+You have concepts like:
+
+```text
+Database
+Object store
+Key
+Index
+Transaction
+Request
+Version
+Upgrade
+Cursor
+```
+
+This complexity exists because IndexedDB solves a much larger problem.
+
+Compare:
+
+```js
+localStorage.setItem("theme", "dark");
+```
+
+with an IndexedDB application managing thousands of records.
+
+The latter requires proper data modeling.
+
+---
+
+# 30. Browser Storage Architecture
+
+At this point, think of the browser as providing several layers:
+
+```text
+                 Browser
+                    │
+       ┌────────────┼──────────────┐
+       │            │              │
+    Cookies      Web Storage    IndexedDB
+       │            │              │
+       │       ┌────┴────┐         │
+       │       │         │         │
+       │   localStorage session   Database
+       │                     Storage
+       │
+       ↓
+HTTP requests
+```
+
+Different storage mechanisms solve different problems.
+
+---
+
+# 31. The Engineer's Decision Tree
+
+When deciding where to store something, ask:
+
+### Question 1
+
+**Does the server need the data automatically on requests?**
+
+If yes:
+
+```text
+Consider cookies
+```
+
+### Question 2
+
+**Is it just a small client-side preference?**
+
+For example:
+
+```text
+theme
+language
+UI settings
+```
+
+Then:
+
+```text
+localStorage
+```
+
+may be appropriate.
+
+### Question 3
+
+**Is it temporary state associated with the current tab/session?**
+
+Then:
+
+```text
+sessionStorage
+```
+
+may be appropriate.
+
+### Question 4
+
+**Do I need lots of structured/offline data?**
+
+Then:
+
+```text
+IndexedDB
+```
+
+is usually the stronger choice.
+
+---
+
+# 32. Storage Is NOT the Same as State Management
+
+This distinction is important for modern frontend engineering.
+
+Consider React:
+
+```js
+const [theme, setTheme] = useState("dark");
+```
+
+This is **application state in memory**.
+
+Meanwhile:
+
+```js
+localStorage.setItem("theme", "dark");
+```
+
+is **persistence**.
+
+They are related but not the same thing.
+
+A common architecture is:
+
+```text
+              Application
+                  │
+          ┌───────┴───────┐
+          │               │
+      In-memory         Persistent
+        state             storage
+          │               │
+       React           localStorage
+       state            IndexedDB
+```
+
+For example:
+
+```text
+Application starts
+        ↓
+Read persisted preference
+        ↓
+Initialize application state
+        ↓
+User changes preference
+        ↓
+Update application state
+        ↓
+Persist preference
+```
+
+---
+
+# 33. The Hydration Problem
+
+This becomes especially important with frameworks such as Next.js.
+
+Suppose you write:
+
+```js
+const theme = localStorage.getItem("theme");
+```
+
+at module scope or during server rendering.
+
+Problem:
+
+```text
+Server
+  ↓
+No browser localStorage
+```
+
+`localStorage` is a browser API.
+
+Therefore:
+
+```js
+typeof window !== "undefined"
+```
+
+is often relevant when code may execute in an environment without browser APIs.
+
+In a client-side React component, access is commonly performed after the component reaches the browser environment, for example inside an effect when appropriate.
+
+This is part of understanding the difference between:
+
+```text
+Server environment
+        vs
+Browser environment
+```
+
+---
+
+# 34. Storage and XSS
+
+Let's examine a realistic security scenario.
+
+Suppose an application does:
+
+```js
+localStorage.setItem("authToken", token);
+```
+
+Then an XSS vulnerability allows attacker-controlled JavaScript to execute.
+
+The attacker may be able to do:
+
+```js
+const token = localStorage.getItem("authToken");
+```
+
+and potentially exfiltrate it.
+
+Therefore:
+
+```text
+XSS
+ ↓
+JavaScript execution
+ ↓
+localStorage access
+ ↓
+Sensitive token exposure
+```
+
+This is one reason security architecture matters more than simply asking:
+
+> “Where can I store my token?”
+
+You need to reason about:
+
+```text
+XSS
+CSRF
+SameSite
+HttpOnly
+Secure
+CORS
+session management
+token lifetime
+```
+
+---
+
+# 35. Storage Does Not Protect Against XSS
+
+A common misconception is:
+
+> “My data is inside browser storage, so it is secure.”
+
+No.
+
+If JavaScript running under your origin has permission to access the storage:
+
+```text
+Application JS
+      ↓
+localStorage
+```
+
+then malicious JavaScript running under the same origin can potentially do the same.
+
+Storage is an **isolation/persistence mechanism**, not automatically a **security mechanism**.
+
+---
+
+# 36. Storage Quotas
+
+Browser storage is not unlimited.
+
+Browsers impose storage limits and may apply different policies depending on:
+
+```text
+browser
+origin
+device storage
+storage type
+private browsing mode
+user settings
+```
+
+Therefore, production applications should not assume:
+
+```text
+"I can store unlimited data."
+```
+
+For large offline applications, you need to design around storage quotas and handle failures.
+
+---
+
+# 37. Storage Persistence
+
+There is another important concept:
+
+### Persistence
+
+Browsers may have policies that allow stored data to be evicted under certain conditions, particularly for less durable storage.
+
+For serious offline applications, the Storage API also exposes mechanisms related to persistent storage.
+
+The broader engineering principle is:
+
+> **Browser storage is controlled by the browser, not owned by your application like a server disk.**
+
+---
+
+# 38. Storage Is Origin-Isolated
+
+Consider:
+
+```text
+https://myapp.com
+```
+
+and:
+
+```text
+https://evil.com
+```
+
+They cannot simply do:
+
+```js
+evil.com
+   ↓
+localStorage of myapp.com
+```
+
+The same-origin policy prevents arbitrary cross-origin storage access.
+
+This is one of the foundational security boundaries of the web.
+
+---
+
+# 39. Storage Comparison — Engineer's View
+
+Here is the mental model I want you to remember:
+
+| Mechanism        | Think of it as                 | Persistence  | JS access | Sent automatically in HTTP |
+| ---------------- | ------------------------------ | ------------ | --------- | -------------------------- |
+| Variable         | RAM                            | No           | Yes       | No                         |
+| `sessionStorage` | Temporary tab notebook         | Session      | Yes       | No                         |
+| `localStorage`   | Persistent small notebook      | Long-lived   | Yes       | No                         |
+| Cookie           | HTTP credential/state envelope | Configurable | Sometimes | Yes                        |
+| IndexedDB        | Browser database               | Persistent   | Yes       | No                         |
+
+---
+
+# 40. Practical Example: E-Commerce Application
+
+Imagine you're building:
+
+```text
+ShopApp
+```
+
+You have:
+
+### Dark mode
+
+```text
+localStorage
+```
+
+Because:
+
+```text
+small
+client preference
+persistent
+```
+
+### Current checkout step
+
+```text
+sessionStorage
+```
+
+because it is temporary session-oriented state.
+
+### Login session
+
+Potentially:
+
+```text
+Secure + HttpOnly + appropriate SameSite cookie
+```
+
+because the server needs to associate HTTP requests with the user's session.
+
+### Offline product catalog
+
+```text
+IndexedDB
+```
+
+because:
+
+```text
+many records
+structured data
+offline access
+```
+
+This is how an engineer chooses storage—not by memorizing API names, but by matching **requirements to characteristics**.
+
+---
+
+# 41. The Most Important Conceptual Question
+
+Suppose an interviewer asks:
+
+> **Why shouldn't we store everything in localStorage?**
+
+A strong answer is:
+
+`localStorage` is a synchronous, string-only, client-side storage mechanism intended for relatively small amounts of persistent data. It is accessible to JavaScript running under the origin, so it should not be treated as a secure storage mechanism for secrets. It also has no built-in HTTP integration, structured querying, or transactional database model. For server-managed authentication state, cookies may be more appropriate; for larger structured/offline datasets, IndexedDB is generally better.
+
+That's an **engineering answer**.
+
+---
+
+# 42. Your Mental Model
+
+Memorize this diagram:
+
+```text
+                     BROWSER
+                        │
+          ┌─────────────┼─────────────┐
+          │             │             │
+       Cookies      Web Storage    IndexedDB
+          │             │             │
+          │        ┌────┴────┐        │
+          │        │         │        │
+          │      local     session    │
+          │      storage   storage    │
+          │                           │
+          ↓                           ↓
+      HTTP state               Local database
+          │                           │
+          ↓                           ↓
+       SERVER                    OFFLINE DATA
+
+
+JavaScript variables
+        │
+        ↓
+   In-memory state
+        │
+        ↓
+   disappears when
+   execution context ends
+```
+
+And the most important decision rule:
+
+```text
+Small + persistent + client preference
+             ↓
+        localStorage
+
+
+Temporary + current tab/session
+             ↓
+       sessionStorage
+
+
+Server-managed HTTP state
+             ↓
+           Cookie
+
+
+Large + structured + offline
+             ↓
+         IndexedDB
+```
+
+## What comes next
+
+We should now go **one level deeper into `localStorage`**, including:
+
+1. Exact Storage API behavior
+2. `setItem()` / `getItem()` edge cases
+3. JSON serialization/deserialization
+4. `null` vs `"null"`
+5. storage quotas and `QuotaExceededError`
+6. `storage` event
+7. cross-tab synchronization
+8. why `localStorage` is synchronous
+9. race conditions and consistency
+10. building a production-quality storage wrapper
+11. safe schema/version handling
+12. XSS implications
+13. why storing JWTs in `localStorage` is controversial
+14. `localStorage` vs cookies for authentication
+15. practical interview/conceptual questions
+
+That will turn **“I know localStorage”** into **“I understand browser persistence as an engineer.”**
